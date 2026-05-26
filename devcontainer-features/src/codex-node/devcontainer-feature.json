@@ -1,6 +1,6 @@
 {
   "id": "codex-node",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "OpenAI Codex with Node.js",
   "description": "Installs Node.js, npm, the OpenAI Codex CLI, and optionally links Codex state folders into the workspace.",
   "documentationURL": "https://containers.dev/implementors/features/",
