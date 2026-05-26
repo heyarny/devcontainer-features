@@ -1,0 +1,70 @@
+// For format details, see https://containers.dev/implementors/json_reference/.
+{
+    "name": "Devcontainer Features",
+    "image": "mcr.microsoft.com/devcontainers/base:noble",
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    // "dockerComposeFile": [
+    //     "./docker-compose.yml"
+    // ],
+    // "service": "development",
+    // "runServices": [
+    //     "development"
+    // ],
+    "remoteUser": "vscode",
+    "mounts": [
+        // Codex
+        "source=${localEnv:HOME}/.codex/auth.json,target=/home/vscode/.codex/auth.json,type=bind,readonly",
+        "source=${localEnv:HOME}/.codex_container/config.toml,target=/home/vscode/.codex/config.toml,type=bind", // Use the container-specific Codex config.
+        "source=${localEnv:HOME}/.codex/skills,target=/home/vscode/.codex/skills,type=bind", // Share installed Codex skills.
+        "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind" // Share installed Codex plugins.
+    ],
+    "workspaceFolder": "/workspace",
+    "containerEnv": {
+        // the classic POSIX/default locale, simple and predictable
+        "LANG": "C.UTF-8",
+        "LC_ALL": "C.UTF-8"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:latest": {
+            "moby": "false"
+        },
+        "ghcr.io/heyarny/devcontainer-features/codex-node:1": {
+            "codexVersion": "latest",
+            "nodeVersion": "24",
+            "npmVersion": "11.15.0",
+            "linkedFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
+        }
+    },
+    // Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "openai.chatgpt",
+                "tamasfe.even-better-toml"
+            ],
+            "settings": {
+                // none yet
+            }
+        }
+    },
+    "portsAttributes": {
+        // "80": {
+        //     "label": "Application (HTTP)",
+        //     "onAutoForward": "notify"
+        // },
+        // "443": {
+        //     "label": "Application (HTTPS)",
+        //     "onAutoForward": "silent"
+        // },
+    },
+    // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    // "remoteUser": "root"
+    "forwardPorts": [
+        // 80,
+        // 443
+    ],
+    // Start the Codex app-server early so remote clients can connect to
+    // the expected control socket as soon as the container is ready.
+    // "postStartCommand": ".devcontainer/scripts/start-codex-app-server.sh"
+    "postCreateCommand": "/usr/local/share/codex-devcontainer/setup-links.sh"
+}

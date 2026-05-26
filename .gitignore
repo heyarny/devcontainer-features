@@ -1,0 +1,5 @@
+.devcontainer/.devpod-internal/
+.DS_Store
+.codex/
+.devcontainer/devcontainer-lock.json
+.devcontainer/local-features/

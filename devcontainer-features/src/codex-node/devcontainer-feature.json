@@ -1,0 +1,30 @@
+{
+  "id": "codex-node",
+  "version": "1.0.0",
+  "name": "OpenAI Codex with Node.js",
+  "description": "Installs Node.js, npm, the OpenAI Codex CLI, and optionally links Codex state folders into the workspace.",
+  "documentationURL": "https://containers.dev/implementors/features/",
+  "options": {
+    "codexVersion": {
+      "type": "string",
+      "default": "latest",
+      "description": "Version or npm dist-tag of @openai/codex to install."
+    },
+    "nodeVersion": {
+      "type": "string",
+      "default": "24",
+      "description": "Node.js version or nvm alias to install."
+    },
+    "npmVersion": {
+      "type": "string",
+      "default": "11.15.0",
+      "description": "npm version or dist-tag to install. Use 'bundled' or 'none' to keep the npm version included with Node.js."
+    },
+    "linkedFolders": {
+      "type": "string",
+      "default": "",
+      "description": "Optional folder link mappings. Relative target paths resolve under the workspace. Leave empty to disable linking."
+    }
+  },
+  "postCreateCommand": "/usr/local/share/codex-devcontainer/setup-links.sh"
+}
