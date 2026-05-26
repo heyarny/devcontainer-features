@@ -1,10 +1,10 @@
-# Codex Devcontainer Feature
+# Codex Node Dev Container Feature
 
 This repository contains an example devcontainer setup for running Codex in a
-container, plus a modified Codex Dev Container Feature.
+container, plus the `codex-node` Dev Container Feature.
 
 The feature installs Node.js, npm, and the OpenAI Codex CLI. Its main
-customization is `linkedFolders`: selected folders under `$CODEX_HOME` can be
+customization is `linkFolders`: selected folders under `$CODEX_HOME` can be
 symlinked to project-local folders after the workspace mount is available. This
 is useful for keeping Codex state, such as `sessions` and `archived_sessions`,
 inside the project host workspace instead of only inside the container home.
@@ -13,11 +13,10 @@ inside the project host workspace instead of only inside the container home.
 
 - `codex-node`: installs Node.js 24, npm 11.15.0, and `@openai/codex`.
 - Supports `codexVersion`, `nodeVersion`, and `npmVersion`.
-- Supports `linkedFolders` mappings from `$CODEX_HOME/<name>` to workspace
+- Supports `linkFolders` mappings from `$CODEX_HOME/<name>` to workspace
   folders.
-- Repairs a pre-created root-owned `$CODEX_HOME` directory before creating
-  links, which can happen when bind-mounted Codex files create the parent
-  directory.
+- Provides a folder-linking script that can run after the workspace mount is
+  available.
 
 ## Example Usage
 
@@ -26,9 +25,10 @@ inside the project host workspace instead of only inside the container home.
   "features": {
     "ghcr.io/heyarny/devcontainer-features/codex-node:1": {
       "codexVersion": "latest",
-      "linkedFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
+      "linkFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
     }
-  }
+  },
+  "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh"
 }
 ```
 
@@ -39,9 +39,12 @@ That creates links like:
 /home/vscode/.codex/archived_sessions -> /workspace/.codex/archived_sessions
 ```
 
-`linkedFolders` is intentionally documented as a string. Arrays of strings are
+`linkFolders` is intentionally documented as a string. Arrays of strings are
 not portable across tools; DevPod serializes them differently than the Dev
 Containers CLI. Use the comma-separated string form for predictable behavior.
+
+The feature installs `/usr/local/share/codex-node/link-folders.sh`. Run that
+script from the devcontainer `postCreateCommand` when using `linkFolders`.
 
 ## Options
 
@@ -50,9 +53,9 @@ Containers CLI. Use the comma-separated string form for predictable behavior.
 | `codexVersion` | `latest` | Version or npm dist-tag of `@openai/codex` to install. |
 | `nodeVersion` | `24` | Node.js version or nvm alias to install. |
 | `npmVersion` | `11.15.0` | npm version or dist-tag to install. Use `bundled` or `none` to keep the npm version included with Node.js. |
-| `linkedFolders` | empty | Optional folder mappings. Relative target paths resolve under the workspace. |
+| `linkFolders` | empty | Optional folder mappings. Omit this option when no folder links are needed. |
 
-Each `linkedFolders` entry uses `name=target`. The `name` is created under
+Each `linkFolders` entry uses `name=target`. The `name` is created under
 `$CODEX_HOME`; relative `target` values resolve under the workspace. Targets may
 also use `{workspace}`, `{workspaceFolder}`, or `{localWorkspaceFolder}`.
 
@@ -62,9 +65,13 @@ From the repository root:
 
 ```bash
 devpod delete devcontainer-features
-devpod up .
+devpod up . --ide none
 ssh devcontainer-features.devpod 'node --version; npm --version; codex --version; readlink /home/vscode/.codex/sessions'
 ```
+
+The repository devcontainer uses Docker Compose so the test container has a
+stable name. Its top-level `postCreateCommand` runs the feature's folder-link
+script after the workspace mount is available.
 
 ## Publish
 
@@ -88,6 +95,11 @@ With explicit credentials:
 ```bash
 REGISTRY_USER="<github-user>" REGISTRY_PASSWORD="<token-with-write:packages>" ./devcontainer-features/deploy.sh
 ```
+
+The feature version is defined in
+`devcontainer-features/src/codex-node/devcontainer-feature.json`. Bump it before
+publishing a new release; already-published versions are skipped by the Dev
+Container CLI.
 
 ## Test
 

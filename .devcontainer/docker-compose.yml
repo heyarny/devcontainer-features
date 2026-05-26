@@ -1,0 +1,9 @@
+name: devcontainer-features
+
+services:
+  development:
+    image: mcr.microsoft.com/devcontainers/base:noble
+    container_name: devcontainer-features-development
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity

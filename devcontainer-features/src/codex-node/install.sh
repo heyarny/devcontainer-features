@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-INSTALL_DIR="/usr/local/share/codex-devcontainer"
+INSTALL_DIR="/usr/local/share/codex-node"
 FEATURE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 codex_version="${CODEXVERSION-${VERSION:-latest}}"
-linked_folders="${LINKEDFOLDERS-${LINKED_FOLDERS-}}"
+link_folders="${LINKFOLDERS-${LINK_FOLDERS-}}"
 nvm_version="${NVM_VERSION:-v0.40.4}"
 node_version="${NODEVERSION-${NODE_VERSION:-24}}"
 npm_version="${NPMVERSION-${NPM_VERSION:-11.15.0}}"
@@ -82,38 +82,6 @@ link_nvm_binaries() {
     fi
 }
 
-prepare_remote_codex_home() {
-    local remote_user="${_REMOTE_USER:-${REMOTE_USER:-${USERNAME:-}}}"
-    local remote_home="${_REMOTE_USER_HOME:-}"
-    local remote_group
-
-    if [ -n "${remote_user}" ] && ! getent passwd "${remote_user}" >/dev/null 2>&1; then
-        remote_user=""
-    fi
-
-    if [ -z "${remote_user}" ] && [ -n "${remote_home}" ]; then
-        remote_user="$(getent passwd | awk -F: -v home="${remote_home}" '$6 == home { print $1; exit }')"
-    fi
-
-    if [ -z "${remote_user}" ]; then
-        return
-    fi
-
-    if [ -z "${remote_home}" ]; then
-        remote_home="$(getent passwd "${remote_user}" | cut -d: -f6)"
-    fi
-
-    if [ -z "${remote_home}" ] || [ ! -d "${remote_home}" ]; then
-        return
-    fi
-
-    remote_group="$(id -gn "${remote_user}")"
-
-    mkdir -p "${remote_home}/.codex"
-    chown "${remote_user}:${remote_group}" "${remote_home}/.codex"
-    chmod u+rwx "${remote_home}/.codex"
-}
-
 if [ -x "${NVM_DIR}/current/bin/npm" ]; then
     export PATH="${NVM_DIR}/current/bin:${PATH}"
 fi
@@ -149,12 +117,10 @@ link_nvm_binaries
 mkdir -p "${INSTALL_DIR}"
 
 {
-    printf 'CODEX_LINKED_FOLDERS_FROM_OPTIONS=%q\n' "${linked_folders}"
+    printf 'CODEX_LINK_FOLDERS_FROM_OPTIONS=%q\n' "${link_folders}"
 } > "${INSTALL_DIR}/options.env"
 
-install -m 0755 "${FEATURE_DIR}/setup-links.sh" "${INSTALL_DIR}/setup-links.sh"
-
-prepare_remote_codex_home
+install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${INSTALL_DIR}/link-folders.sh"
 
 hash -r
 codex --version

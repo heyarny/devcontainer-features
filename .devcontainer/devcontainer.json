@@ -1,7 +1,13 @@
 // For format details, see https://containers.dev/implementors/json_reference/.
 {
     "name": "Devcontainer Features",
-    "image": "mcr.microsoft.com/devcontainers/base:noble",
+    "dockerComposeFile": [
+        "./docker-compose.yml"
+    ],
+    "service": "development",
+    "runServices": [
+        "development"
+    ],
     // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
     // "dockerComposeFile": [
     //     "./docker-compose.yml"
@@ -18,7 +24,6 @@
         "source=${localEnv:HOME}/.codex/skills,target=/home/vscode/.codex/skills,type=bind", // Share installed Codex skills.
         "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind" // Share installed Codex plugins.
     ],
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     "workspaceFolder": "/workspace",
     "containerEnv": {
         // the classic POSIX/default locale, simple and predictable
@@ -33,9 +38,10 @@
             "codexVersion": "latest",
             "nodeVersion": "24",
             "npmVersion": "11.15.0",
-            "linkedFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
+            "linkFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
         }
     },
+    "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh",
     // Configure tool-specific properties.
     "customizations": {
         "vscode": {
