@@ -18,6 +18,7 @@
         "source=${localEnv:HOME}/.codex/skills,target=/home/vscode/.codex/skills,type=bind", // Share installed Codex skills.
         "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind" // Share installed Codex plugins.
     ],
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     "workspaceFolder": "/workspace",
     "containerEnv": {
         // the classic POSIX/default locale, simple and predictable
@@ -62,9 +63,5 @@
     "forwardPorts": [
         // 80,
         // 443
-    ],
-    // Start the Codex app-server early so remote clients can connect to
-    // the expected control socket as soon as the container is ready.
-    // "postStartCommand": ".devcontainer/scripts/start-codex-app-server.sh"
-    "postCreateCommand": "/usr/local/share/codex-devcontainer/setup-links.sh"
+    ]
 }

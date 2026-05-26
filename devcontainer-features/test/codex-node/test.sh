@@ -8,6 +8,15 @@ test -x /usr/local/bin/node
 test -x /usr/local/bin/npm
 test -x /usr/local/share/codex-devcontainer/setup-links.sh
 
+remote_user="$(id -un)"
+remote_group="$(id -gn)"
+remote_home="$(getent passwd "${remote_user}" | cut -d: -f6)"
+
+test -d "${remote_home}/.codex"
+test "$(stat -c '%U:%G' "${remote_home}/.codex")" = "${remote_user}:${remote_group}"
+touch "${remote_home}/.codex/install-write-probe"
+rm -f "${remote_home}/.codex/install-write-probe"
+
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
 

@@ -82,6 +82,38 @@ link_nvm_binaries() {
     fi
 }
 
+prepare_remote_codex_home() {
+    local remote_user="${_REMOTE_USER:-${REMOTE_USER:-${USERNAME:-}}}"
+    local remote_home="${_REMOTE_USER_HOME:-}"
+    local remote_group
+
+    if [ -n "${remote_user}" ] && ! getent passwd "${remote_user}" >/dev/null 2>&1; then
+        remote_user=""
+    fi
+
+    if [ -z "${remote_user}" ] && [ -n "${remote_home}" ]; then
+        remote_user="$(getent passwd | awk -F: -v home="${remote_home}" '$6 == home { print $1; exit }')"
+    fi
+
+    if [ -z "${remote_user}" ]; then
+        return
+    fi
+
+    if [ -z "${remote_home}" ]; then
+        remote_home="$(getent passwd "${remote_user}" | cut -d: -f6)"
+    fi
+
+    if [ -z "${remote_home}" ] || [ ! -d "${remote_home}" ]; then
+        return
+    fi
+
+    remote_group="$(id -gn "${remote_user}")"
+
+    mkdir -p "${remote_home}/.codex"
+    chown "${remote_user}:${remote_group}" "${remote_home}/.codex"
+    chmod u+rwx "${remote_home}/.codex"
+}
+
 if [ -x "${NVM_DIR}/current/bin/npm" ]; then
     export PATH="${NVM_DIR}/current/bin:${PATH}"
 fi
@@ -121,6 +153,8 @@ mkdir -p "${INSTALL_DIR}"
 } > "${INSTALL_DIR}/options.env"
 
 install -m 0755 "${FEATURE_DIR}/setup-links.sh" "${INSTALL_DIR}/setup-links.sh"
+
+prepare_remote_codex_home
 
 hash -r
 codex --version
