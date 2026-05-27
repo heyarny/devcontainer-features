@@ -23,12 +23,11 @@ inside the project host workspace instead of only inside the container home.
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:1": {
+    "ghcr.io/heyarny/devcontainer-features/codex-node:1.0.3": {
       "codexVersion": "latest",
       "linkFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
     }
-  },
-  "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh"
+  }
 }
 ```
 
@@ -43,8 +42,10 @@ That creates links like:
 not portable across tools; DevPod serializes them differently than the Dev
 Containers CLI. Use the comma-separated string form for predictable behavior.
 
-The feature installs `/usr/local/share/codex-node/link-folders.sh`. Run that
-script from the devcontainer `postCreateCommand` when using `linkFolders`.
+The feature declares a `postCreateCommand` that runs
+`/usr/local/share/codex-node/link-folders.sh` after the workspace mount is
+available. If your devcontainer client does not run Feature lifecycle metadata,
+add that script as a top-level devcontainer `postCreateCommand`.
 
 ## Options
 
@@ -69,31 +70,27 @@ devpod up . --ide none
 ssh devcontainer-features.devpod 'node --version; npm --version; codex --version; readlink /home/vscode/.codex/sessions'
 ```
 
-The repository devcontainer uses Docker Compose so the test container has a
-stable name. Its top-level `postCreateCommand` runs the feature's folder-link
-script after the workspace mount is available.
+The repository devcontainer uses the published image-based Feature reference and
+an explicit `workspaceMount` to keep `/workspace` consistent across DevPod and
+VS Code. Its top-level `postCreateCommand` is retained for DevPod compatibility.
 
 ## Publish
 
 The default publish target is GHCR:
 
 ```text
-ghcr.io/heyarny/devcontainer-features/codex-node:1
+ghcr.io/heyarny/devcontainer-features/codex-node:1.0.3
 ```
 
-To publish locally:
+Login to GHCR, then publish with the Dev Container CLI:
 
 ```bash
 echo "<github-token-with-write:packages>" \
   | docker login ghcr.io -u "<github-user>" --password-stdin
 
-./devcontainer-features/deploy.sh
-```
-
-With explicit credentials:
-
-```bash
-REGISTRY_USER="<github-user>" REGISTRY_PASSWORD="<token-with-write:packages>" ./devcontainer-features/deploy.sh
+devcontainer features publish devcontainer-features/src \
+  --registry ghcr.io \
+  --namespace heyarny/devcontainer-features
 ```
 
 The feature version is defined in

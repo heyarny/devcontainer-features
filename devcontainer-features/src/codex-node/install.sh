@@ -82,6 +82,20 @@ link_nvm_binaries() {
     fi
 }
 
+prepare_codex_home() {
+    local remote_user="${_REMOTE_USER:-}"
+    local remote_user_home="${_REMOTE_USER_HOME:-}"
+    local remote_group
+
+    if [ -z "${remote_user}" ] || [ -z "${remote_user_home}" ] || ! id "${remote_user}" >/dev/null 2>&1; then
+        return
+    fi
+
+    remote_group="$(id -gn "${remote_user}")"
+    mkdir -p "${remote_user_home}/.codex"
+    chown "${remote_user}:${remote_group}" "${remote_user_home}/.codex"
+}
+
 if [ -x "${NVM_DIR}/current/bin/npm" ]; then
     export PATH="${NVM_DIR}/current/bin:${PATH}"
 fi
@@ -96,6 +110,7 @@ fi
 install_node_with_nvm
 
 link_nvm_binaries
+prepare_codex_home
 
 npm_prefix="$(npm prefix -g)"
 codex_spec="@openai/codex@${codex_version}"

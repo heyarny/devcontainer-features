@@ -1,13 +1,10 @@
 // For format details, see https://containers.dev/implementors/json_reference/.
 {
     "name": "Devcontainer Features",
-    "dockerComposeFile": [
-        "./docker-compose.yml"
-    ],
-    "service": "development",
-    "runServices": [
-        "development"
-    ],
+    // Without Dockerfile or Docker Compose file.
+    "image": "mcr.microsoft.com/devcontainers/base:noble",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+
     // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
     // "dockerComposeFile": [
     //     "./docker-compose.yml"
@@ -16,7 +13,8 @@
     // "runServices": [
     //     "development"
     // ],
-    "remoteUser": "vscode",
+
+    "workspaceFolder": "/workspace",
     "mounts": [
         // Codex
         "source=${localEnv:HOME}/.codex/auth.json,target=/home/vscode/.codex/auth.json,type=bind,readonly",
@@ -24,7 +22,8 @@
         "source=${localEnv:HOME}/.codex/skills,target=/home/vscode/.codex/skills,type=bind", // Share installed Codex skills.
         "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind" // Share installed Codex plugins.
     ],
-    "workspaceFolder": "/workspace",
+
+    "remoteUser": "vscode",
     "containerEnv": {
         // the classic POSIX/default locale, simple and predictable
         "LANG": "C.UTF-8",
@@ -34,7 +33,7 @@
         "ghcr.io/devcontainers/features/docker-outside-of-docker:latest": {
             "moby": "false"
         },
-        "ghcr.io/heyarny/devcontainer-features/codex-node:1": {
+        "ghcr.io/heyarny/devcontainer-features/codex-node:1.0.3": {
             "codexVersion": "latest",
             "nodeVersion": "24",
             "npmVersion": "11.15.0",

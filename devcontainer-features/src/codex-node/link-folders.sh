@@ -17,6 +17,53 @@ fi
 workspace_folder="${WORKSPACE_FOLDER:-${DEVCONTAINER_WORKSPACE_FOLDER:-/workspace}}"
 codex_home="${CODEX_HOME:-${HOME}/.codex}"
 
+ensure_codex_home_writable() {
+    local owner owner_group
+
+    if [ -L "${codex_home}" ]; then
+        if [ -d "${codex_home}" ] && [ -w "${codex_home}" ]; then
+            return
+        fi
+
+        echo "Codex home '${codex_home}' is a symlink but is not writable." >&2
+        exit 1
+    fi
+
+    if [ -e "${codex_home}" ] && [ ! -d "${codex_home}" ]; then
+        echo "Codex home '${codex_home}' exists but is not a directory." >&2
+        exit 1
+    fi
+
+    if [ ! -e "${codex_home}" ]; then
+        mkdir -p "${codex_home}" 2>/dev/null || true
+    fi
+
+    if [ -d "${codex_home}" ] && [ -w "${codex_home}" ]; then
+        return
+    fi
+
+    case "${codex_home}" in
+        "${HOME}/.codex"|${HOME}/.codex/*)
+            ;;
+        *)
+            echo "Codex home '${codex_home}' is not writable. Set CODEX_HOME to a writable path or fix its ownership." >&2
+            exit 1
+            ;;
+    esac
+
+    if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+        owner="$(id -un)"
+        owner_group="$(id -gn)"
+        sudo mkdir -p "${codex_home}"
+        sudo chown "${owner}:${owner_group}" "${codex_home}"
+    fi
+
+    if [ ! -d "${codex_home}" ] || [ ! -w "${codex_home}" ]; then
+        echo "Codex home '${codex_home}' is not writable. Could not repair ownership." >&2
+        exit 1
+    fi
+}
+
 resolve_target() {
     local target="$1"
 
@@ -81,6 +128,8 @@ mirror_session_dirs() {
 
 session_target=""
 archived_session_target=""
+
+ensure_codex_home_writable
 
 parse_link_folders() {
     local raw_entry entry name raw_target target

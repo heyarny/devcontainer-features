@@ -37,6 +37,24 @@ test "$(readlink "${csv_home}/sessions")" = "${workspace}/.codex/sessions"
 test "$(readlink "${csv_home}/archived_sessions")" = "${workspace}/.codex/archived_sessions"
 test -d "${workspace}/.codex/archived_sessions/project-a"
 
+if [ "$(id -u)" = "0" ] && id vscode >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
+    root_owned_home="${tmp_dir}/root-owned-home"
+    root_owned_codex_home="${root_owned_home}/.codex"
+    mkdir -p "${root_owned_codex_home}"
+    chown root:root "${root_owned_codex_home}"
+
+    sudo -u vscode env \
+        CODEX_LINK_FOLDERS='sessions=.codex/sessions' \
+        WORKSPACE_FOLDER="${workspace}" \
+        CODEX_HOME="${root_owned_codex_home}" \
+        HOME="${root_owned_home}" \
+        /usr/local/share/codex-node/link-folders.sh
+
+    test -L "${root_owned_codex_home}/sessions"
+    test "$(readlink "${root_owned_codex_home}/sessions")" = "${workspace}/.codex/sessions"
+    test "$(stat -c '%U' "${root_owned_codex_home}")" = "vscode"
+fi
+
 disabled_home="${tmp_dir}/disabled-home/.codex"
 CODEX_LINK_FOLDERS='' \
 WORKSPACE_FOLDER="${workspace}" \

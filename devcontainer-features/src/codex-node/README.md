@@ -25,8 +25,10 @@ Each `linkFolders` entry uses `name=target`. The `name` is created under
 Explicit paths may use `{workspace}`, `{workspaceFolder}`, or
 `{localWorkspaceFolder}` placeholders.
 
-The feature installs `/usr/local/share/codex-node/link-folders.sh`. Run that
-script from the devcontainer `postCreateCommand` when using `linkFolders`.
+The feature declares a `postCreateCommand` that runs
+`/usr/local/share/codex-node/link-folders.sh` after the workspace mount is
+available. If your devcontainer client does not run Feature lifecycle metadata,
+add that script as a top-level devcontainer `postCreateCommand`.
 
 ## Example
 
@@ -35,7 +37,7 @@ Install Codex only:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:1": {}
+    "ghcr.io/heyarny/devcontainer-features/codex-node:1.0.3": {}
   }
 }
 ```
@@ -45,11 +47,10 @@ Install Codex and link workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:1": {
+    "ghcr.io/heyarny/devcontainer-features/codex-node:1.0.3": {
       "codexVersion": "latest",
       "linkFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
     }
-  },
-  "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh"
+  }
 }
 ```
