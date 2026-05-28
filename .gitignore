@@ -2,4 +2,6 @@
 .DS_Store
 .codex/
 .devcontainer/devcontainer-lock.json
-.devcontainer/local-features/
+.devcontainer/local-features/*
+!.devcontainer/local-features/codex-node/
+!.devcontainer/local-features/codex-node/**

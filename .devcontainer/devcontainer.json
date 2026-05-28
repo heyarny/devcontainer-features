@@ -33,11 +33,11 @@
         "ghcr.io/devcontainers/features/docker-outside-of-docker:latest": {
             "moby": "false"
         },
-        "ghcr.io/heyarny/devcontainer-features/codex-node:1.0.3": {
+        "ghcr.io/heyarny/devcontainer-features/codex-node:2.0.0": {
             "codexVersion": "latest",
             "nodeVersion": "24",
             "npmVersion": "11.15.0",
-            "linkFolders": "sessions=.codex/sessions,archived_sessions=.codex/archived_sessions"
+            "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
         }
     },
     "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh",
