@@ -4,10 +4,10 @@ set -eu
 FEATURE_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 INSTALLER="${FEATURE_DIR}/install-codex-standalone.sh"
 
-codex_version="${CODEXVERSION-${VERSION:-latest}}"
-install_dir="${CODEXINSTALLDIR:-/usr/local/bin}"
-standalone_home="${CODEXSTANDALONEHOME:-/usr/local/share/codex}"
-codex_link_folders="${CODEXLINKFOLDERS-}"
+codex_version="${VERSION:-latest}"
+install_dir="${INSTALLDIR:-/usr/local/bin}"
+standalone_home="${STANDALONEHOME:-/usr/local/share/codex}"
+codex_link_folders="${LINKFOLDERS:-}"
 
 if [ -z "${codex_version}" ]; then
     codex_version="latest"
@@ -23,7 +23,7 @@ case "${codex_version}" in
 esac
 
 if [ "${install_dir#/}" = "${install_dir}" ] || [ "${standalone_home#/}" = "${standalone_home}" ]; then
-    echo "CODEXINSTALLDIR and CODEXSTANDALONEHOME must be absolute paths." >&2
+    echo "installDir and standaloneHome must be absolute paths." >&2
     exit 1
 fi
 

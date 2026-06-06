@@ -16,10 +16,10 @@ image-wide paths so `codex` is available to all container users:
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `codexVersion` | `latest` | Codex CLI release version to install. Use `latest` to resolve the newest release at build time. |
-| `codexInstallDir` | `/usr/local/bin` | Directory where the global `codex` command symlink is installed. |
-| `codexStandaloneHome` | `/usr/local/share/codex` | Directory where standalone Codex release payloads are stored. |
-| `codexLinkFolders` | empty | Optional folder link mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
+| `version` | `latest` | Codex CLI release version to install. Use `latest` to resolve the newest release at build time. |
+| `installDir` | `/usr/local/bin` | Directory where the global `codex` command symlink is installed. |
+| `standaloneHome` | `/usr/local/share/codex` | Directory where standalone Codex release payloads are stored. |
+| `linkFolders` | empty | Optional folder link mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
 
 The vendored installer downloads release assets from GitHub. It does not fetch
 the installer script from `chatgpt.com` during the devcontainer build.
@@ -28,7 +28,7 @@ For large build matrices or environments that hit GitHub API rate limits, pass a
 `GITHUB_TOKEN` during the build. The vendored installer uses it only for
 `api.github.com` requests. The token is optional for normal installs.
 
-Use the comma-separated string form for `codexLinkFolders`. Each entry uses
+Use the comma-separated string form for `linkFolders`. Each entry uses
 `name=target`. The `name` is created under `$CODEX_HOME`; `target` must resolve
 to an absolute container path.
 
@@ -43,8 +43,8 @@ script as a top-level devcontainer `postCreateCommand`.
 {
   "features": {
     "ghcr.io/heyarny/devcontainer-features/codex:1.0.0": {
-      "codexVersion": "latest",
-      "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
+      "version": "latest",
+      "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
   }
 }

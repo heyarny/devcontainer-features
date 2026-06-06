@@ -6,22 +6,22 @@
   "documentationURL": "https://github.com/openai/codex",
   "postCreateCommand": "/usr/local/share/codex/link-folders.sh",
   "options": {
-    "codexVersion": {
+    "version": {
       "type": "string",
       "default": "latest",
       "description": "Codex CLI release version to install. Use 'latest' to resolve the newest release at build time."
     },
-    "codexInstallDir": {
+    "installDir": {
       "type": "string",
       "default": "/usr/local/bin",
       "description": "Directory where the global codex command symlink is installed."
     },
-    "codexStandaloneHome": {
+    "standaloneHome": {
       "type": "string",
       "default": "/usr/local/share/codex",
       "description": "Directory where standalone Codex release payloads are stored."
     },
-    "codexLinkFolders": {
+    "linkFolders": {
       "type": "string",
       "default": "",
       "description": "Optional folder link mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed."
