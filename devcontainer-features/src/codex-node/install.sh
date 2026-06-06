@@ -152,9 +152,13 @@ link_nvm_binaries
 
 mkdir -p "${INSTALL_DIR}"
 
-{
-    printf 'CODEX_LINK_FOLDERS=%q\n' "${codex_link_folders}"
-} > "${INSTALL_DIR}/options.env"
+if [ -n "${codex_link_folders}" ]; then
+    {
+        printf 'CODEX_LINK_FOLDERS=%q\n' "${codex_link_folders}"
+    } > "${INSTALL_DIR}/options.env"
+else
+    rm -f "${INSTALL_DIR}/options.env"
+fi
 
 install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${INSTALL_DIR}/link-folders.sh"
 

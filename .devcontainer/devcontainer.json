@@ -36,14 +36,11 @@
         "ghcr.io/devcontainers/features/docker-outside-of-docker:latest": {
             "moby": "false"
         },
-        "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0": {
-            "codexVersion": "latest",
-            "nodeVersion": "24",
-            "npmVersion": "11.15.0",
-            "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
+        "ghcr.io/heyarny/devcontainer-features/codex:1.0.2": {
+            "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
         }
     },
-    "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh",
+    "postCreateCommand": "/usr/local/share/codex/link-folders.sh",
     // Configure tool-specific properties.
     "customizations": {
         "vscode": {

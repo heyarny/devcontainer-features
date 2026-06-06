@@ -42,7 +42,7 @@ script as a top-level devcontainer `postCreateCommand`.
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:1.0.1": {
+    "ghcr.io/heyarny/devcontainer-features/codex:1.0.2": {
       "version": "latest",
       "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }

@@ -53,9 +53,13 @@ CODEX_HOME="${standalone_home}" \
 chmod -R a+rX "${standalone_home}"
 chmod 0755 "${install_dir}/codex"
 
-{
-    printf 'CODEX_LINK_FOLDERS=%s\n' "$(printf '%s' "${codex_link_folders}" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/")"
-} > "${standalone_home}/options.env"
+if [ -n "${codex_link_folders}" ]; then
+    {
+        printf 'CODEX_LINK_FOLDERS=%s\n' "$(printf '%s' "${codex_link_folders}" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/")"
+    } > "${standalone_home}/options.env"
+else
+    rm -f "${standalone_home}/options.env"
+fi
 
 install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${standalone_home}/link-folders.sh"
 

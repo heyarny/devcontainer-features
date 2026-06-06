@@ -40,7 +40,7 @@ Install Codex only:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0": {}
+    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.1": {}
   }
 }
 ```
@@ -50,7 +50,7 @@ Install Codex and link workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.1": {
       "codexVersion": "latest",
       "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }

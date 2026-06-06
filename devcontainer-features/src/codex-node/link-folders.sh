@@ -15,10 +15,6 @@ else
     link_folders="${CODEX_LINK_FOLDERS-}"
 fi
 
-if [ -z "${link_folders}" ]; then
-    exit 0
-fi
-
 codex_home="${CODEX_HOME:-${HOME}/.codex}"
 
 ensure_codex_home_writable() {
@@ -67,6 +63,14 @@ ensure_codex_home_writable() {
         exit 1
     fi
 }
+
+if [ -z "${link_folders}" ]; then
+    if [ -e "${codex_home}" ]; then
+        ensure_codex_home_writable
+    fi
+
+    exit 0
+fi
 
 validate_target() {
     local target="$1"

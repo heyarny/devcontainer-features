@@ -7,6 +7,7 @@ codex --version
 test -x /usr/local/bin/node
 test -x /usr/local/bin/npm
 test -x /usr/local/share/codex-node/link-folders.sh
+test ! -e /usr/local/share/codex-node/options.env
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "${tmp_dir}"' EXIT
@@ -59,6 +60,22 @@ HOME="${tmp_dir}/disabled-home" \
     /usr/local/share/codex-node/link-folders.sh
 
 test ! -e "${disabled_home}"
+
+if [ "$(id -u)" = "0" ] && id vscode >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
+    disabled_root_owned_home="${tmp_dir}/disabled-root-owned-home"
+    disabled_root_owned_codex_home="${disabled_root_owned_home}/.codex"
+    mkdir -p "${disabled_root_owned_codex_home}"
+    chown root:root "${disabled_root_owned_home}" "${disabled_root_owned_codex_home}"
+
+    sudo -u vscode env \
+        CODEX_LINK_FOLDERS='' \
+        CODEX_HOME="${disabled_root_owned_codex_home}" \
+        HOME="${disabled_root_owned_home}" \
+        /usr/local/share/codex-node/link-folders.sh
+
+    test "$(stat -c '%U' "${disabled_root_owned_codex_home}")" = "vscode"
+    test -w "${disabled_root_owned_codex_home}"
+fi
 
 absolute_home="${tmp_dir}/absolute-home/.codex"
 test ! -e "${workspace}/state/sessions"
