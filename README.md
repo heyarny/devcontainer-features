@@ -30,7 +30,7 @@ Install standalone Codex and link workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:1.0.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex:1.0.1": {
       "version": "latest",
       "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
@@ -118,7 +118,7 @@ top-level `postCreateCommand` is retained for DevPod compatibility.
 The default publish target is GHCR:
 
 ```text
-ghcr.io/heyarny/devcontainer-features/codex:1.0.0
+ghcr.io/heyarny/devcontainer-features/codex:1.0.1
 ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0
 ```
 
