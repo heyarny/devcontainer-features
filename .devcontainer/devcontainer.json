@@ -16,6 +16,9 @@
 
     "workspaceFolder": "/workspace",
     "mounts": [
+        // Git
+        "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly",
+
         // Codex
         "source=${localEnv:HOME}/.codex/auth.json,target=/home/vscode/.codex/auth.json,type=bind,readonly",
         "source=${localEnv:HOME}/.codex_container/config.toml,target=/home/vscode/.codex/config.toml,type=bind", // Use the container-specific Codex config.
@@ -33,7 +36,7 @@
         "ghcr.io/devcontainers/features/docker-outside-of-docker:latest": {
             "moby": "false"
         },
-        "ghcr.io/heyarny/devcontainer-features/codex-node:2.0.0": {
+        "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0": {
             "codexVersion": "latest",
             "nodeVersion": "24",
             "npmVersion": "11.15.0",

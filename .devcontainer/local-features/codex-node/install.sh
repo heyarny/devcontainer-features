@@ -41,11 +41,6 @@ export NVM_DIR="${NVM_DIR:-/usr/local/share/nvm}"
 export NVM_SYMLINK_CURRENT="${NVM_SYMLINK_CURRENT:-true}"
 
 install_node_with_nvm() {
-    if ! command -v apt-get >/dev/null 2>&1; then
-        echo "npm is required to install @openai/codex, and automatic Node installation currently requires apt-get." >&2
-        exit 1
-    fi
-
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates curl xz-utils
 
@@ -61,6 +56,32 @@ install_node_with_nvm() {
     nvm install "${node_version}"
     nvm alias default "${node_version}" >/dev/null
     nvm use default >/dev/null
+}
+
+install_node_with_apk() {
+    local installed_node_major requested_node_major
+
+    apk add --no-cache ca-certificates curl xz nodejs npm
+
+    installed_node_major="$(node --version | sed -E 's/^v([0-9]+).*/\1/')"
+    requested_node_major="$(printf '%s\n' "${node_version}" | sed -nE 's/^([0-9]+).*/\1/p')"
+
+    if [ -n "${requested_node_major}" ] && [ "${requested_node_major}" != "${installed_node_major}" ]; then
+        echo "Alpine package repositories installed Node.js major ${installed_node_major}, but nodeVersion requested ${node_version}." >&2
+        echo "Use a matching Node.js major for Alpine images or an apt-based base image for nvm-managed Node.js versions." >&2
+        exit 1
+    fi
+}
+
+install_node() {
+    if command -v apt-get >/dev/null 2>&1; then
+        install_node_with_nvm
+    elif command -v apk >/dev/null 2>&1; then
+        install_node_with_apk
+    else
+        echo "npm is required to install @openai/codex, and automatic Node installation currently supports apt-get or apk." >&2
+        exit 1
+    fi
 }
 
 link_nvm_binary() {
@@ -104,10 +125,10 @@ if ! command -v npm >/dev/null 2>&1 && [ -s "${NVM_DIR}/nvm.sh" ]; then
     # Some devcontainer builds execute feature scripts in a non-login shell.
     # shellcheck disable=SC1091
     . "${NVM_DIR}/nvm.sh"
-    nvm use default >/dev/null
+    nvm use default >/dev/null 2>&1 || true
 fi
 
-install_node_with_nvm
+install_node
 
 link_nvm_binaries
 prepare_codex_home

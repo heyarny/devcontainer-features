@@ -1,0 +1,11 @@
+{
+  "link_folders": {
+    "image": "mcr.microsoft.com/devcontainers/base:noble",
+    "features": {
+      "codex": {
+        "codexVersion": "latest",
+        "codexLinkFolders": "sessions=/tmp/codex-sessions,archived_sessions=/tmp/codex-archived-sessions"
+      }
+    }
+  }
+}

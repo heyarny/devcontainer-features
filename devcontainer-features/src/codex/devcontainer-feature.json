@@ -1,0 +1,30 @@
+{
+  "id": "codex",
+  "version": "1.0.0",
+  "name": "OpenAI Codex CLI",
+  "description": "Installs the standalone OpenAI Codex CLI globally without requiring Node.js or npm, and optionally links Codex state folders into the workspace.",
+  "documentationURL": "https://github.com/openai/codex",
+  "postCreateCommand": "/usr/local/share/codex/link-folders.sh",
+  "options": {
+    "codexVersion": {
+      "type": "string",
+      "default": "latest",
+      "description": "Codex CLI release version to install. Use 'latest' to resolve the newest release at build time."
+    },
+    "codexInstallDir": {
+      "type": "string",
+      "default": "/usr/local/bin",
+      "description": "Directory where the global codex command symlink is installed."
+    },
+    "codexStandaloneHome": {
+      "type": "string",
+      "default": "/usr/local/share/codex",
+      "description": "Directory where standalone Codex release payloads are stored."
+    },
+    "codexLinkFolders": {
+      "type": "string",
+      "default": "",
+      "description": "Optional folder link mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed."
+    }
+  }
+}

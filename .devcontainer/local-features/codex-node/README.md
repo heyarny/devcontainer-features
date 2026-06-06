@@ -5,8 +5,8 @@ folders from `$CODEX_HOME` into the workspace after the workspace mount is
 available.
 
 Consumers do not need to add a separate Node/npm feature. This feature installs
-Node.js 24 with nvm and npm 11.15.0 by default, and can
-override either version when needed.
+Node.js 24 and npm 11.15.0 by default, and can override either version when
+needed.
 
 ## Options
 
@@ -16,6 +16,11 @@ override either version when needed.
 | `nodeVersion` | `24` | Node.js version or nvm alias to install. |
 | `npmVersion` | `11.15.0` | npm version or dist-tag to install. Use `bundled` or `none` to keep the npm version included with Node.js. |
 | `codexLinkFolders` | empty | Optional folder mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
+
+On apt-based images, `nodeVersion` is installed with nvm and can be a semver
+version or nvm alias. On Alpine images, Node.js and npm are installed with
+`apk`; the requested `nodeVersion` must match the major version available from
+the Alpine package repository.
 
 Use the comma-separated string form for `codexLinkFolders`. It is portable across
 Dev Container tools; arrays may be serialized differently by different clients.
@@ -35,7 +40,7 @@ Install Codex only:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:2.0.0": {}
+    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0": {}
   }
 }
 ```
@@ -45,7 +50,7 @@ Install Codex and link workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:2.0.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0": {
       "codexVersion": "latest",
       "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }

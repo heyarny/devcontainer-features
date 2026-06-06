@@ -1,29 +1,49 @@
-# Codex Node Dev Container Feature
+# Codex Dev Container Features
 
-This repository contains an example devcontainer setup for running Codex in a
-container, plus the `codex-node` Dev Container Feature.
+This repository contains example devcontainer setup for running Codex in a
+container, plus Dev Container Features for installing Codex.
 
-The feature installs Node.js, npm, and the OpenAI Codex CLI. Its main
-customization is `codexLinkFolders`: selected folders under `$CODEX_HOME` can be
-symlinked to project-local folders after the workspace mount is available. This
-is useful for keeping Codex state, such as `sessions` and `archived_sessions`,
-inside the project host workspace instead of only inside the container home.
+The `codex` feature installs the standalone OpenAI Codex CLI globally without
+Node.js or npm. The `codex-node` feature installs Node.js, npm, and the npm-based
+OpenAI Codex CLI. Both support `codexLinkFolders`: selected folders under
+`$CODEX_HOME` can be symlinked to project-local folders after the workspace
+mount is available. This is useful for keeping Codex state, such as `sessions`
+and `archived_sessions`, inside the project host workspace instead of only
+inside the container home.
 
 ## Feature
 
+- `codex`: installs the standalone Codex CLI globally at `/usr/local/bin/codex`.
 - `codex-node`: installs Node.js 24, npm 11.15.0, and `@openai/codex`.
-- Supports `codexVersion`, `nodeVersion`, and `npmVersion`.
-- Supports `codexLinkFolders` mappings from `$CODEX_HOME/<name>` to workspace
-  folders.
+- Both features support apt-based and Alpine-based Microsoft Dev Container base
+  images.
+- Both features support `codexVersion` and `codexLinkFolders`.
+- `codex` also supports `codexInstallDir` and `codexStandaloneHome`.
+- `codex-node` also supports `nodeVersion` and `npmVersion`.
 - Provides a folder-linking script that can run after the workspace mount is
   available.
 
 ## Example Usage
 
+Install standalone Codex and link workspace-backed state folders:
+
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:2.0.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex:1.0.0": {
+      "codexVersion": "latest",
+      "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
+    }
+  }
+}
+```
+
+Install npm-based Codex with Node.js and workspace-backed state folders:
+
+```jsonc
+{
+  "features": {
+    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0": {
       "codexVersion": "latest",
       "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
@@ -42,12 +62,27 @@ That creates links like:
 not portable across tools; DevPod serializes them differently than the Dev
 Containers CLI. Use the comma-separated string form for predictable behavior.
 
-The feature declares a `postCreateCommand` that runs
-`/usr/local/share/codex-node/link-folders.sh` after the workspace mount is
-available. If your devcontainer client does not run Feature lifecycle metadata,
-add that script as a top-level devcontainer `postCreateCommand`.
+Each feature declares a `postCreateCommand` that runs its folder-linking script
+after the workspace mount is available. If your devcontainer client does not run
+Feature lifecycle metadata, add the relevant script as a top-level devcontainer
+`postCreateCommand`: `/usr/local/share/codex/link-folders.sh` for `codex`, or
+`/usr/local/share/codex-node/link-folders.sh` for `codex-node`.
 
-## Options
+## Standalone `codex` Options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `codexVersion` | `latest` | Codex CLI release version to install. Use `latest` to resolve the newest release at build time. |
+| `codexInstallDir` | `/usr/local/bin` | Directory where the global `codex` command symlink is installed. |
+| `codexStandaloneHome` | `/usr/local/share/codex` | Directory where standalone Codex release payloads are stored. |
+| `codexLinkFolders` | empty | Optional folder mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
+
+The standalone `codex` feature vendors the official Codex installer and uses
+GitHub release APIs to resolve and verify downloads. For large build matrices or
+rate-limited environments, pass `GITHUB_TOKEN` during the build; it is used only
+for `api.github.com` requests and is optional for normal installs.
+
+## npm-based `codex-node` Options
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -55,6 +90,11 @@ add that script as a top-level devcontainer `postCreateCommand`.
 | `nodeVersion` | `24` | Node.js version or nvm alias to install. |
 | `npmVersion` | `11.15.0` | npm version or dist-tag to install. Use `bundled` or `none` to keep the npm version included with Node.js. |
 | `codexLinkFolders` | empty | Optional folder mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
+
+On apt-based images, `nodeVersion` is installed with nvm and can be a semver
+version or nvm alias. On Alpine images, Node.js and npm are installed with
+`apk`; the requested `nodeVersion` must match the major version available from
+the Alpine package repository.
 
 Each `codexLinkFolders` entry uses `name=target`. The `name` is created under
 `$CODEX_HOME`; `target` must resolve to an absolute container path.
@@ -78,7 +118,8 @@ top-level `postCreateCommand` is retained for DevPod compatibility.
 The default publish target is GHCR:
 
 ```text
-ghcr.io/heyarny/devcontainer-features/codex-node:2.0.0
+ghcr.io/heyarny/devcontainer-features/codex:1.0.0
+ghcr.io/heyarny/devcontainer-features/codex-node:2.1.0
 ```
 
 Login to GHCR, then publish with the Dev Container CLI:
@@ -92,17 +133,24 @@ devcontainer features publish devcontainer-features/src \
   --namespace heyarny/devcontainer-features
 ```
 
-The feature version is defined in
-`devcontainer-features/src/codex-node/devcontainer-feature.json`. Bump it before
-publishing a new release; already-published versions are skipped by the Dev
-Container CLI.
+Feature versions are defined in each
+`devcontainer-features/src/<feature>/devcontainer-feature.json`. Bump them
+before publishing a new release; already-published versions are skipped by the
+Dev Container CLI.
 
 ## Test
 
 From the repository root:
 
 ```bash
+devcontainer features test --features codex --base-image mcr.microsoft.com/devcontainers/base:noble devcontainer-features
+devcontainer features test --features codex --base-image mcr.microsoft.com/devcontainers/base:bookworm devcontainer-features
+devcontainer features test --features codex --base-image mcr.microsoft.com/devcontainers/base:alpine devcontainer-features
+
 devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:noble devcontainer-features
+devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:bookworm devcontainer-features
+devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:trixie devcontainer-features
+devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:alpine devcontainer-features
 ```
 
 ## Resources
