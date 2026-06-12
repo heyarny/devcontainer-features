@@ -7,5 +7,16 @@
         "linkFolders": "sessions=/tmp/codex-sessions,archived_sessions=/tmp/codex-archived-sessions"
       }
     }
+  },
+  "custom_standalone_home": {
+    "image": "mcr.microsoft.com/devcontainers/base:noble",
+    "features": {
+      "codex": {
+        "version": "latest",
+        "standaloneHome": "/opt/codex-standalone",
+        "linkFolders": "sessions=/tmp/codex-custom-sessions",
+        "configSyncSource": "/tmp/codex-custom-config.toml"
+      }
+    }
   }
 }

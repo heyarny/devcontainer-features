@@ -3,11 +3,13 @@ set -eu
 
 FEATURE_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 INSTALLER="${FEATURE_DIR}/install-codex-standalone.sh"
+SUPPORT_DIR="/usr/local/share/codex"
 
 codex_version="${VERSION:-latest}"
 install_dir="${INSTALLDIR:-/usr/local/bin}"
 standalone_home="${STANDALONEHOME:-/usr/local/share/codex}"
 codex_link_folders="${LINKFOLDERS:-}"
+codex_config_sync_source="${CONFIGSYNCSOURCE:-}"
 
 if [ -z "${codex_version}" ]; then
     codex_version="latest"
@@ -27,6 +29,31 @@ if [ "${install_dir#/}" = "${install_dir}" ] || [ "${standalone_home#/}" = "${st
     exit 1
 fi
 
+if [ -n "${codex_config_sync_source}" ] && [ "${codex_config_sync_source#/}" = "${codex_config_sync_source}" ]; then
+    echo "configSyncSource must be an absolute container path." >&2
+    exit 1
+fi
+
+write_options_env() {
+    options_file="${SUPPORT_DIR}/options.env"
+
+    if [ -z "${codex_link_folders}" ] && [ -z "${codex_config_sync_source}" ]; then
+        rm -f "${options_file}"
+        return
+    fi
+
+    {
+        if [ -n "${codex_link_folders}" ]; then
+            printf 'CODEX_LINK_FOLDERS=%s\n' "$(printf '%s' "${codex_link_folders}" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/")"
+        fi
+
+        if [ -n "${codex_config_sync_source}" ]; then
+            printf 'CODEX_CONFIG_SYNC_SOURCE=%s\n' "$(printf '%s' "${codex_config_sync_source}" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/")"
+        fi
+    } > "${options_file}"
+    chmod 0644 "${options_file}"
+}
+
 install_prerequisites() {
     if command -v apt-get >/dev/null 2>&1; then
         export DEBIAN_FRONTEND=noninteractive
@@ -42,7 +69,7 @@ install_prerequisites() {
 
 install_prerequisites
 
-mkdir -p "${install_dir}" "${standalone_home}"
+mkdir -p "${install_dir}" "${standalone_home}" "${SUPPORT_DIR}"
 
 CODEX_NON_INTERACTIVE=true \
 CODEX_RELEASE="${codex_version}" \
@@ -53,15 +80,10 @@ CODEX_HOME="${standalone_home}" \
 chmod -R a+rX "${standalone_home}"
 chmod 0755 "${install_dir}/codex"
 
-if [ -n "${codex_link_folders}" ]; then
-    {
-        printf 'CODEX_LINK_FOLDERS=%s\n' "$(printf '%s' "${codex_link_folders}" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/")"
-    } > "${standalone_home}/options.env"
-else
-    rm -f "${standalone_home}/options.env"
-fi
+write_options_env
 
-install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${standalone_home}/link-folders.sh"
+install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${SUPPORT_DIR}/link-folders.sh"
+install -m 0755 "${FEATURE_DIR}/sync-config.sh" "${SUPPORT_DIR}/sync-config.sh"
 
 hash -r 2>/dev/null || true
 "${install_dir}/codex" --version

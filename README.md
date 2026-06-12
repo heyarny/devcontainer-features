@@ -30,7 +30,7 @@ Install standalone Codex and link workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:1.0.2": {
+    "ghcr.io/heyarny/devcontainer-features/codex:1.1.0": {
       "version": "latest",
       "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
@@ -43,7 +43,7 @@ Install npm-based Codex with Node.js and workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:2.1.1": {
+    "ghcr.io/heyarny/devcontainer-features/codex-node:2.2.0": {
       "codexVersion": "latest",
       "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
@@ -76,6 +76,7 @@ Feature lifecycle metadata, add the relevant script as a top-level devcontainer
 | `installDir` | `/usr/local/bin` | Directory where the global `codex` command symlink is installed. |
 | `standaloneHome` | `/usr/local/share/codex` | Directory where standalone Codex release payloads are stored. |
 | `linkFolders` | empty | Optional folder mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
+| `configSyncSource` | empty | Optional absolute container path to a mounted `config.toml` file to sync bidirectionally with `$CODEX_HOME/config.toml`. Omit this option to disable config syncing. |
 
 The standalone `codex` feature vendors the official Codex installer and uses
 GitHub release APIs to resolve and verify downloads. For large build matrices or
@@ -90,6 +91,7 @@ for `api.github.com` requests and is optional for normal installs.
 | `nodeVersion` | `24` | Node.js version or nvm alias to install. |
 | `npmVersion` | `11.15.0` | npm version or dist-tag to install. Use `bundled` or `none` to keep the npm version included with Node.js. |
 | `codexLinkFolders` | empty | Optional folder mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
+| `configSyncSource` | empty | Optional absolute container path to a mounted `config.toml` file to sync bidirectionally with `$CODEX_HOME/config.toml`. Omit this option to disable config syncing. |
 
 On apt-based images, `nodeVersion` is installed with nvm and can be a semver
 version or nvm alias. On Alpine images, Node.js and npm are installed with
@@ -113,13 +115,44 @@ The repository devcontainer uses the published Feature reference and an explicit
 `workspaceMount` to keep `/workspace` consistent across DevPod and VS Code. Its
 top-level `postCreateCommand` is retained for DevPod compatibility.
 
+## Codex Config Mounting
+
+Avoid binding `config.toml` directly to `/home/vscode/.codex/config.toml`.
+Recent Codex versions persist config changes by replacing the config file, and
+replacing a path that is itself a bind-mounted file can fail. Do not bind the
+whole `/home/vscode/.codex` directory either, because Codex also keeps runtime
+state there.
+
+Instead, bind the host config file at a separate path, keep
+`/home/vscode/.codex/config.toml` as a normal container-local file, and sync the
+two files in both directions after startup:
+
+```jsonc
+{
+  "mounts": [
+    "source=${localEnv:HOME}/.codex/config_container.toml,target=/home/vscode/.codex_config.toml,type=bind",
+    "source=${localEnv:HOME}/.codex/auth.json,target=/home/vscode/.codex/auth.json,type=bind,readonly",
+    "source=${localEnv:HOME}/.codex/skills,target=/home/vscode/.codex/skills,type=bind",
+    "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind"
+  ],
+  "features": {
+    "ghcr.io/heyarny/devcontainer-features/codex:1.1.0": {
+      "configSyncSource": "/home/vscode/.codex_config.toml"
+    }
+  }
+}
+```
+
+Create `${HOME}/.codex/config_container.toml` on the host before starting the
+container. Single-file bind mounts require the source file to exist.
+
 ## Publish
 
 The default publish target is GHCR:
 
 ```text
-ghcr.io/heyarny/devcontainer-features/codex:1.0.2
-ghcr.io/heyarny/devcontainer-features/codex-node:2.1.1
+ghcr.io/heyarny/devcontainer-features/codex:1.1.0
+ghcr.io/heyarny/devcontainer-features/codex-node:2.2.0
 ```
 
 Login to GHCR, then publish with the Dev Container CLI:

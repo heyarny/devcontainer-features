@@ -7,6 +7,7 @@ codex --version
 test -x /usr/local/bin/node
 test -x /usr/local/bin/npm
 test -x /usr/local/share/codex-node/link-folders.sh
+test -x /usr/local/share/codex-node/sync-config.sh
 test ! -e /usr/local/share/codex-node/options.env
 
 tmp_dir="$(mktemp -d)"
@@ -95,3 +96,32 @@ if CODEX_LINK_FOLDERS='sessions=.codex/sessions' \
     echo "Expected relative Codex link target to fail." >&2
     exit 1
 fi
+
+disabled_config_home="${tmp_dir}/disabled-config-home/.codex"
+CODEX_CONFIG_SYNC_SOURCE='' \
+CODEX_HOME="${disabled_config_home}" \
+HOME="${tmp_dir}/disabled-config-home" \
+    /usr/local/share/codex-node/sync-config.sh
+
+test ! -e "${disabled_config_home}"
+
+sync_home="${tmp_dir}/sync-home/.codex"
+sync_source="${tmp_dir}/mapped-config.toml"
+printf 'model = "host-old"\n' > "${sync_source}"
+
+CODEX_CONFIG_SYNC_SOURCE="${sync_source}" \
+CODEX_HOME="${sync_home}" \
+HOME="${tmp_dir}/sync-home" \
+    /usr/local/share/codex-node/sync-config.sh
+
+test "$(cat "${sync_home}/config.toml")" = 'model = "host-old"'
+
+printf 'model = "local-new"\n' > "${sync_home}/config.toml"
+sleep 3
+test "$(cat "${sync_source}")" = 'model = "local-new"'
+
+printf 'model = "host-new"\n' > "${sync_source}"
+sleep 3
+test "$(cat "${sync_home}/config.toml")" = 'model = "host-new"'
+
+kill "$(cat "${sync_home}/.config-sync.pid")"

@@ -6,6 +6,7 @@ FEATURE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 codex_version="${CODEXVERSION-${VERSION:-latest}}"
 codex_link_folders="${CODEXLINKFOLDERS-}"
+codex_config_sync_source="${CONFIGSYNCSOURCE:-}"
 nvm_version="${NVM_VERSION:-v0.40.4}"
 node_version="${NODEVERSION-${NODE_VERSION:-24}}"
 npm_version="${NPMVERSION-${NPM_VERSION:-11.15.0}}"
@@ -34,6 +35,11 @@ fi
 
 if [[ "${npm_version}" != "bundled" ]] && [[ "${npm_version}" != "none" ]] && [[ ! "${npm_version}" =~ ^[0-9A-Za-z._~+-]+$ ]]; then
     echo "Unsupported npm version '${npm_version}'. Use 'bundled', 'none', a semver version, or an npm dist-tag." >&2
+    exit 1
+fi
+
+if [ -n "${codex_config_sync_source}" ] && [[ "${codex_config_sync_source}" != /* ]]; then
+    echo "configSyncSource must be an absolute container path." >&2
     exit 1
 fi
 
@@ -117,6 +123,25 @@ prepare_codex_home() {
     chown "${remote_user}:${remote_group}" "${remote_user_home}/.codex"
 }
 
+write_options_env() {
+    local options_file="${INSTALL_DIR}/options.env"
+
+    if [ -z "${codex_link_folders}" ] && [ -z "${codex_config_sync_source}" ]; then
+        rm -f "${options_file}"
+        return
+    fi
+
+    {
+        if [ -n "${codex_link_folders}" ]; then
+            printf 'CODEX_LINK_FOLDERS=%q\n' "${codex_link_folders}"
+        fi
+
+        if [ -n "${codex_config_sync_source}" ]; then
+            printf 'CODEX_CONFIG_SYNC_SOURCE=%q\n' "${codex_config_sync_source}"
+        fi
+    } > "${options_file}"
+}
+
 if [ -x "${NVM_DIR}/current/bin/npm" ]; then
     export PATH="${NVM_DIR}/current/bin:${PATH}"
 fi
@@ -151,16 +176,10 @@ fi
 link_nvm_binaries
 
 mkdir -p "${INSTALL_DIR}"
-
-if [ -n "${codex_link_folders}" ]; then
-    {
-        printf 'CODEX_LINK_FOLDERS=%q\n' "${codex_link_folders}"
-    } > "${INSTALL_DIR}/options.env"
-else
-    rm -f "${INSTALL_DIR}/options.env"
-fi
+write_options_env
 
 install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${INSTALL_DIR}/link-folders.sh"
+install -m 0755 "${FEATURE_DIR}/sync-config.sh" "${INSTALL_DIR}/sync-config.sh"
 
 hash -r
 codex --version

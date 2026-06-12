@@ -20,8 +20,8 @@
         "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly",
 
         // Codex
+        "source=${localEnv:HOME}/.codex/config_container.toml,target=/home/vscode/.codex_config.toml,type=bind", // Sync this file to Codex's live config path after startup.
         "source=${localEnv:HOME}/.codex/auth.json,target=/home/vscode/.codex/auth.json,type=bind,readonly",
-        "source=${localEnv:HOME}/.codex_container/config.toml,target=/home/vscode/.codex/config.toml,type=bind", // Use the container-specific Codex config.
         "source=${localEnv:HOME}/.codex/skills,target=/home/vscode/.codex/skills,type=bind", // Share installed Codex skills.
         "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind" // Share installed Codex plugins.
     ],
@@ -36,8 +36,10 @@
         "ghcr.io/devcontainers/features/docker-outside-of-docker:latest": {
             "moby": "false"
         },
-        "ghcr.io/heyarny/devcontainer-features/codex:1.0.2": {
-            "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
+        "ghcr.io/heyarny/devcontainer-features/codex:1": {
+            "version": "0.139.0",
+            "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions",
+            "configSyncSource": "/home/vscode/.codex_config.toml"
         }
     },
     "postCreateCommand": "/usr/local/share/codex/link-folders.sh",
