@@ -32,12 +32,20 @@ Each `codexLinkFolders` entry uses `name=target`. The `name` is created under
 The feature declares a `postCreateCommand` that runs
 `/usr/local/share/codex-node/link-folders.sh` after the workspace mount is
 available. If your devcontainer client does not run Feature lifecycle metadata,
-add that script as a top-level devcontainer `postCreateCommand`.
+add that command as a top-level devcontainer `postCreateCommand`, and add
+`/usr/local/share/codex-node/sync-config.sh` as a top-level `postStartCommand`.
 
 The feature also declares a `postStartCommand` that runs
-`/usr/local/share/codex-node/sync-config.sh`. It exits immediately unless
-`configSyncSource` is set. Use this when you want a host-backed Codex config
-without mounting over Codex's live config path:
+`/usr/local/share/codex-node/sync-config.sh`. The sync script exits immediately
+unless `configSyncSource` is set. Use this when you want a host-backed Codex
+config without mounting over Codex's live config path:
+
+```jsonc
+{
+  "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh",
+  "postStartCommand": "/usr/local/share/codex-node/sync-config.sh"
+}
+```
 
 ```jsonc
 {

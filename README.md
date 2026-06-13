@@ -13,7 +13,9 @@ inside the container home.
 
 ## Feature
 
-- `codex`: installs the standalone Codex CLI globally at `/usr/local/bin/codex`.
+- `codex`: installs the standalone Codex CLI globally at `/usr/local/bin/codex`
+  and provides `/usr/local/share/codex/update.sh` for manual updates
+  inside an existing container.
 - `codex-node`: installs Node.js 24, npm 11.15.0, and `@openai/codex`.
 - Both features support apt-based and Alpine-based Microsoft Dev Container base
   images.
@@ -30,7 +32,7 @@ Install standalone Codex and link workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:1.1.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex:1.1.1": {
       "version": "latest",
       "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
@@ -62,11 +64,23 @@ Folder-link options are intentionally documented as strings. Arrays of strings
 are not portable across tools; DevPod serializes them differently than the Dev
 Containers CLI. Use the comma-separated string form for predictable behavior.
 
-Each feature declares a `postCreateCommand` that runs its folder-linking script
-after the workspace mount is available. If your devcontainer client does not run
-Feature lifecycle metadata, add the relevant script as a top-level devcontainer
-`postCreateCommand`: `/usr/local/share/codex/link-folders.sh` for `codex`, or
-`/usr/local/share/codex-node/link-folders.sh` for `codex-node`.
+Each feature declares a `postCreateCommand` that links folders after the
+workspace mount is available. It also declares a `postStartCommand` that starts
+the config sync watcher on every container start. If your devcontainer client
+does not run Feature lifecycle metadata, add the relevant scripts as top-level
+devcontainer lifecycle commands:
+
+```jsonc
+{
+  "postCreateCommand": "/usr/local/share/codex/link-folders.sh",
+  "postStartCommand": "/usr/local/share/codex/sync-config.sh"
+}
+```
+
+Use `/usr/local/share/codex/link-folders.sh` and
+`/usr/local/share/codex/sync-config.sh` for `codex`, or
+`/usr/local/share/codex-node/link-folders.sh` and
+`/usr/local/share/codex-node/sync-config.sh` for `codex-node`.
 
 ## Standalone `codex` Options
 
@@ -82,6 +96,18 @@ The standalone `codex` feature vendors the official Codex installer and uses
 GitHub release APIs to resolve and verify downloads. For large build matrices or
 rate-limited environments, pass `GITHUB_TOKEN` during the build; it is used only
 for `api.github.com` requests and is optional for normal installs.
+
+Containers built with the standalone feature include the same installer as
+`/usr/local/share/codex/update.sh`. To update or reinstall Codex inside an
+existing container, run:
+
+```bash
+sudo /usr/local/share/codex/update.sh
+```
+
+Pass `--release VERSION` to install a specific Codex release. The wrapper uses
+the `installDir` and `standaloneHome` values recorded when the feature was
+installed, unless `CODEX_INSTALL_DIR` or `CODEX_HOME` are set explicitly.
 
 ## npm-based `codex-node` Options
 
@@ -113,7 +139,8 @@ ssh devcontainer-features.devpod 'node --version; npm --version; codex --version
 
 The repository devcontainer uses the published Feature reference and an explicit
 `workspaceMount` to keep `/workspace` consistent across DevPod and VS Code. Its
-top-level `postCreateCommand` is retained for DevPod compatibility.
+top-level `postCreateCommand` and `postStartCommand` are retained for DevPod
+compatibility.
 
 ## Codex Config Mounting
 
@@ -125,7 +152,7 @@ state there.
 
 Instead, bind the host config file at a separate path, keep
 `/home/vscode/.codex/config.toml` as a normal container-local file, and sync the
-two files in both directions after startup:
+two files in both directions after the container is created or started:
 
 ```jsonc
 {
@@ -136,7 +163,7 @@ two files in both directions after startup:
     "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind"
   ],
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:1.1.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex:1.1.1": {
       "configSyncSource": "/home/vscode/.codex_config.toml"
     }
   }
@@ -151,7 +178,7 @@ container. Single-file bind mounts require the source file to exist.
 The default publish target is GHCR:
 
 ```text
-ghcr.io/heyarny/devcontainer-features/codex:1.1.0
+ghcr.io/heyarny/devcontainer-features/codex:1.1.1
 ghcr.io/heyarny/devcontainer-features/codex-node:2.2.0
 ```
 

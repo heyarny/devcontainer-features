@@ -5,15 +5,19 @@ codex --version
 test -x /usr/local/bin/codex
 test -L /usr/local/bin/codex
 test -d /usr/local/share/codex/packages/standalone
+test -x /usr/local/share/codex/install-codex-standalone.sh
+test -x /usr/local/share/codex/update.sh
+test -f /usr/local/share/codex/install.env
 test -x /usr/local/share/codex/link-folders.sh
 test -x /usr/local/share/codex/sync-config.sh
 test ! -e /usr/local/share/codex/options.env
+/usr/local/share/codex/update.sh --help >/dev/null
 
-if id vscode >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
+if [ "$(id -u)" = "0" ] && id vscode >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
     sudo -u vscode codex --version
 fi
 
-if id node >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
+if [ "$(id -u)" = "0" ] && id node >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
     sudo -u node codex --version
 fi
 

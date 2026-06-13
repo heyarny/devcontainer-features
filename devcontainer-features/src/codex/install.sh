@@ -54,6 +54,20 @@ write_options_env() {
     chmod 0644 "${options_file}"
 }
 
+quote_env_value() {
+    printf '%s' "$1" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/"
+}
+
+write_install_env() {
+    install_env_file="${SUPPORT_DIR}/install.env"
+
+    {
+        printf 'CODEX_FEATURE_INSTALL_DIR=%s\n' "$(quote_env_value "${install_dir}")"
+        printf 'CODEX_FEATURE_STANDALONE_HOME=%s\n' "$(quote_env_value "${standalone_home}")"
+    } > "${install_env_file}"
+    chmod 0644 "${install_env_file}"
+}
+
 install_prerequisites() {
     if command -v apt-get >/dev/null 2>&1; then
         export DEBIAN_FRONTEND=noninteractive
@@ -81,7 +95,10 @@ chmod -R a+rX "${standalone_home}"
 chmod 0755 "${install_dir}/codex"
 
 write_options_env
+write_install_env
 
+install -m 0755 "${FEATURE_DIR}/install-codex-standalone.sh" "${SUPPORT_DIR}/install-codex-standalone.sh"
+install -m 0755 "${FEATURE_DIR}/update.sh" "${SUPPORT_DIR}/update.sh"
 install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${SUPPORT_DIR}/link-folders.sh"
 install -m 0755 "${FEATURE_DIR}/sync-config.sh" "${SUPPORT_DIR}/sync-config.sh"
 

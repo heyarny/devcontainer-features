@@ -1,6 +1,6 @@
 {
   "id": "codex",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "name": "OpenAI Codex CLI",
   "description": "Installs the standalone OpenAI Codex CLI globally without requiring Node.js or npm, and optionally links Codex state folders into the workspace.",
   "documentationURL": "https://github.com/openai/codex",

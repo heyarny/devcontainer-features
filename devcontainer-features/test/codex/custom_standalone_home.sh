@@ -2,6 +2,10 @@
 set -eu
 
 codex --version
+test -x /usr/local/share/codex/install-codex-standalone.sh
+test -x /usr/local/share/codex/update.sh
+test -f /usr/local/share/codex/install.env
+grep -q "CODEX_FEATURE_STANDALONE_HOME='/opt/codex-standalone'" /usr/local/share/codex/install.env
 test -x /usr/local/share/codex/link-folders.sh
 test -x /usr/local/share/codex/sync-config.sh
 test -f /usr/local/share/codex/options.env
