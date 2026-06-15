@@ -10,6 +10,8 @@ codex_config_sync_source="${CONFIGSYNCSOURCE:-}"
 nvm_version="${NVM_VERSION:-v0.40.4}"
 node_version="${NODEVERSION-${NODE_VERSION:-24}}"
 npm_version="${NPMVERSION-${NPM_VERSION:-11.15.0}}"
+remote_user="${_REMOTE_USER:-${_CONTAINER_USER:-}}"
+remote_user_home="${_REMOTE_USER_HOME:-}"
 
 if [ -z "${codex_version}" ]; then
     codex_version="latest"
@@ -142,6 +144,24 @@ write_options_env() {
     } > "${options_file}"
 }
 
+write_runtime_env() {
+    local runtime_env_file="${INSTALL_DIR}/runtime.env"
+
+    if [ -z "${remote_user_home}" ] && [ -n "${remote_user}" ] && command -v getent >/dev/null 2>&1; then
+        remote_user_home="$(getent passwd "${remote_user}" | cut -d: -f6 || true)"
+    fi
+
+    {
+        if [ -n "${remote_user}" ]; then
+            printf 'CODEX_FEATURE_REMOTE_USER=%q\n' "${remote_user}"
+        fi
+
+        if [ -n "${remote_user_home}" ]; then
+            printf 'CODEX_FEATURE_REMOTE_USER_HOME=%q\n' "${remote_user_home}"
+        fi
+    } > "${runtime_env_file}"
+}
+
 if [ -x "${NVM_DIR}/current/bin/npm" ]; then
     export PATH="${NVM_DIR}/current/bin:${PATH}"
 fi
@@ -177,7 +197,9 @@ link_nvm_binaries
 
 mkdir -p "${INSTALL_DIR}"
 write_options_env
+write_runtime_env
 
+install -m 0755 "${FEATURE_DIR}/entrypoint.sh" "${INSTALL_DIR}/entrypoint.sh"
 install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${INSTALL_DIR}/link-folders.sh"
 install -m 0755 "${FEATURE_DIR}/sync-config.sh" "${INSTALL_DIR}/sync-config.sh"
 

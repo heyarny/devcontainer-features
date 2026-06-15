@@ -1,11 +1,10 @@
 {
   "id": "codex-node",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "name": "OpenAI Codex with Node.js",
   "description": "Installs Node.js, npm, the OpenAI Codex CLI, and optionally links Codex state folders into the workspace.",
   "documentationURL": "https://containers.dev/implementors/features/",
-  "postCreateCommand": "/usr/local/share/codex-node/link-folders.sh",
-  "postStartCommand": "/usr/local/share/codex-node/sync-config.sh",
+  "entrypoint": "/usr/local/share/codex-node/entrypoint.sh",
   "options": {
     "codexVersion": {
       "type": "string",

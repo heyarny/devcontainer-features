@@ -10,6 +10,8 @@ install_dir="${INSTALLDIR:-/usr/local/bin}"
 standalone_home="${STANDALONEHOME:-/usr/local/share/codex}"
 codex_link_folders="${LINKFOLDERS:-}"
 codex_config_sync_source="${CONFIGSYNCSOURCE:-}"
+remote_user="${_REMOTE_USER:-${_CONTAINER_USER:-}}"
+remote_user_home="${_REMOTE_USER_HOME:-}"
 
 if [ -z "${codex_version}" ]; then
     codex_version="latest"
@@ -68,6 +70,25 @@ write_install_env() {
     chmod 0644 "${install_env_file}"
 }
 
+write_runtime_env() {
+    runtime_env_file="${SUPPORT_DIR}/runtime.env"
+
+    if [ -z "${remote_user_home}" ] && [ -n "${remote_user}" ] && command -v getent >/dev/null 2>&1; then
+        remote_user_home="$(getent passwd "${remote_user}" | cut -d: -f6 || true)"
+    fi
+
+    {
+        if [ -n "${remote_user}" ]; then
+            printf 'CODEX_FEATURE_REMOTE_USER=%s\n' "$(quote_env_value "${remote_user}")"
+        fi
+
+        if [ -n "${remote_user_home}" ]; then
+            printf 'CODEX_FEATURE_REMOTE_USER_HOME=%s\n' "$(quote_env_value "${remote_user_home}")"
+        fi
+    } > "${runtime_env_file}"
+    chmod 0644 "${runtime_env_file}"
+}
+
 install_prerequisites() {
     if command -v apt-get >/dev/null 2>&1; then
         export DEBIAN_FRONTEND=noninteractive
@@ -96,7 +117,9 @@ chmod 0755 "${install_dir}/codex"
 
 write_options_env
 write_install_env
+write_runtime_env
 
+install -m 0755 "${FEATURE_DIR}/entrypoint.sh" "${SUPPORT_DIR}/entrypoint.sh"
 install -m 0755 "${FEATURE_DIR}/install-codex-standalone.sh" "${SUPPORT_DIR}/install-codex-standalone.sh"
 install -m 0755 "${FEATURE_DIR}/update.sh" "${SUPPORT_DIR}/update.sh"
 install -m 0755 "${FEATURE_DIR}/link-folders.sh" "${SUPPORT_DIR}/link-folders.sh"

@@ -8,6 +8,8 @@ test -d /usr/local/share/codex/packages/standalone
 test -x /usr/local/share/codex/install-codex-standalone.sh
 test -x /usr/local/share/codex/update.sh
 test -f /usr/local/share/codex/install.env
+test -f /usr/local/share/codex/runtime.env
+test -x /usr/local/share/codex/entrypoint.sh
 test -x /usr/local/share/codex/link-folders.sh
 test -x /usr/local/share/codex/sync-config.sh
 test ! -e /usr/local/share/codex/options.env

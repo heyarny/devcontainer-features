@@ -46,23 +46,12 @@ Use the comma-separated string form for `linkFolders`. Each entry uses
 `name=target`. The `name` is created under `$CODEX_HOME`; `target` must resolve
 to an absolute container path.
 
-The feature declares a `postCreateCommand` that runs
-`/usr/local/share/codex/link-folders.sh` after the workspace mount is available.
-If your devcontainer client does not run Feature lifecycle metadata, add that
-command as a top-level devcontainer `postCreateCommand`, and add
-`/usr/local/share/codex/sync-config.sh` as a top-level `postStartCommand`.
-
-The feature also declares a `postStartCommand` that runs
-`/usr/local/share/codex/sync-config.sh`. The sync script exits immediately unless
-`configSyncSource` is set. Use this when you want a host-backed Codex config
-without mounting over Codex's live config path:
-
-```jsonc
-{
-  "postCreateCommand": "/usr/local/share/codex/link-folders.sh",
-  "postStartCommand": "/usr/local/share/codex/sync-config.sh"
-}
-```
+At container start, the feature runs `/usr/local/share/codex/link-folders.sh`
+and `/usr/local/share/codex/sync-config.sh` as the remote user. It then keeps a
+small supervisor loop alive that restarts the config sync watcher if it exits.
+The sync script exits immediately unless `configSyncSource` is set. Use this
+when you want a host-backed Codex config without mounting over Codex's live
+config path:
 
 ```jsonc
 {
@@ -70,7 +59,7 @@ without mounting over Codex's live config path:
     "source=${localEnv:HOME}/.codex/config_container.toml,target=/home/vscode/.codex_config.toml,type=bind"
   ],
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:1.1.1": {
+    "ghcr.io/heyarny/devcontainer-features/codex:2.0.0": {
       "configSyncSource": "/home/vscode/.codex_config.toml"
     }
   }
@@ -85,7 +74,7 @@ container. Single-file bind mounts require the source file to exist.
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:1.1.1": {
+    "ghcr.io/heyarny/devcontainer-features/codex:2.0.0": {
       "version": "latest",
       "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }

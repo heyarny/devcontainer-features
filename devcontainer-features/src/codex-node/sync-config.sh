@@ -113,16 +113,47 @@ watch_config() {
     done
 }
 
+watcher_running() {
+    local candidate_pid="$1"
+    local args
+
+    case "${candidate_pid}" in
+        ''|*[!0-9]*)
+            return 1
+            ;;
+    esac
+
+    if ! kill -0 "${candidate_pid}" 2>/dev/null; then
+        return 1
+    fi
+
+    args="$(ps -p "${candidate_pid}" -o args= 2>/dev/null || true)"
+    case "${args}" in
+        *sync-config.sh*--watch*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 start_watcher() {
     if [ -f "${pid_file}" ]; then
         local old_pid
         old_pid="$(cat "${pid_file}" 2>/dev/null || true)"
-        if [ -n "${old_pid}" ] && kill -0 "${old_pid}" 2>/dev/null; then
+        if watcher_running "${old_pid}"; then
             return
         fi
+        rm -f "${pid_file}"
     fi
 
-    CODEX_CONFIG_SYNC_SOURCE="${config_sync_source}" nohup "${script_path}" --watch >/tmp/codex-config-sync.log 2>&1 &
+    if command -v setsid >/dev/null 2>&1; then
+        CODEX_CONFIG_SYNC_SOURCE="${config_sync_source}" setsid "${script_path}" --watch </dev/null >/tmp/codex-config-sync.log 2>&1 &
+    else
+        CODEX_CONFIG_SYNC_SOURCE="${config_sync_source}" nohup "${script_path}" --watch </dev/null >/tmp/codex-config-sync.log 2>&1 &
+    fi
+
     printf '%s\n' "$!" > "${pid_file}"
 }
 

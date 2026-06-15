@@ -6,6 +6,8 @@ npm --version
 codex --version
 test -x /usr/local/bin/node
 test -x /usr/local/bin/npm
+test -f /usr/local/share/codex-node/runtime.env
+test -x /usr/local/share/codex-node/entrypoint.sh
 test -x /usr/local/share/codex-node/link-folders.sh
 test -x /usr/local/share/codex-node/sync-config.sh
 test ! -e /usr/local/share/codex-node/options.env
