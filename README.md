@@ -1,7 +1,8 @@
 # Codex Dev Container Features
 
 This repository contains example devcontainer setup for running Codex in a
-container, plus Dev Container Features for installing Codex.
+container, Dev Container Features for installing Codex, and an experimental
+Feature for simple local SSH access.
 
 The `codex` feature installs the standalone OpenAI Codex CLI globally without
 Node.js or npm. The `codex-node` feature installs Node.js, npm, and the npm-based
@@ -17,8 +18,10 @@ inside the container home.
   and provides `/usr/local/share/codex/update.sh` for manual updates
   inside an existing container.
 - `codex-node`: installs Node.js 24, npm 11.15.0, and `@openai/codex`.
-- Both features support apt-based and Alpine-based Microsoft Dev Container base
-  images.
+- `just-sshd`: configures SSH for one non-root user without requiring a client
+  password or key.
+- Both Codex Features support apt-based and Alpine-based Microsoft Dev
+  Container base images.
 - `codex` supports `version`, `installDir`, `standaloneHome`, `linkFolders`, and
   `configSyncSource`.
 - `codex-node` supports `codexVersion`, `nodeVersion`, `npmVersion`, and
@@ -54,7 +57,22 @@ Install npm-based Codex with Node.js and workspace-backed state folders:
 }
 ```
 
-That creates links like:
+Run SSH for the Dev Container user without a client password or key:
+
+```jsonc
+{
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/heyarny/devcontainer-features/just-sshd:1": {}
+  }
+}
+```
+
+`just-sshd` is intended only for local containers. Anyone who can invoke its SSH
+proxy can log in as the configured user. The repository example publishes no
+port and restricts the background SSH listener to container loopback.
+
+The folder-link options in the Codex examples create links like:
 
 ```text
 /home/vscode/.codex/sessions -> /workspace/.codex/sessions
@@ -141,6 +159,44 @@ The repository devcontainer uses the local feature reference for development and
 an explicit `workspaceMount` to keep `/workspace` consistent across DevPod and
 VS Code.
 
+## Optional SSH Host Alias on macOS
+
+The example dev container uses `just-sshd:1`. A macOS host helper at
+`.devcontainer/devcontainer-ssh.sh` creates a portless SSH alias whose
+`ProxyCommand` transports SSH through `docker exec`. Registration is
+deliberately opt-in: it is not an `initializeCommand` and therefore does not run
+during container creation.
+
+Each developer can opt in by running the host helper once from a macOS terminal
+in the repository root:
+
+```bash
+.devcontainer/register-ssh-proxy.sh
+```
+
+This registers the following host in the developer's own `~/.ssh/config`:
+
+```bash
+ssh devcontainer-features.devcontainer
+```
+
+The alias is an SSH configuration name, not a DNS hostname. On each connection,
+the proxy finds the running container from its standard
+`devcontainer.local_folder` label. If no match is running, it calls
+`devcontainer up`, resolves exactly one matching container, and runs
+`/usr/sbin/sshd -i` through `docker exec`. It creates no keys, copies no files,
+and publishes no ports.
+
+Each developer can remove their local registration from a macOS host terminal:
+
+```bash
+.devcontainer/devcontainer-ssh.sh unregister \
+  --hostname devcontainer-features
+```
+
+Inside the Linux container, the macOS-only helper exits successfully without
+making changes.
+
 ## Codex Config Mounting
 
 Avoid binding `config.toml` directly to `/home/vscode/.codex/config.toml`.
@@ -199,6 +255,7 @@ The default publish target is GHCR:
 ```text
 ghcr.io/heyarny/devcontainer-features/codex:3.0.0
 ghcr.io/heyarny/devcontainer-features/codex-node:2.3.1
+ghcr.io/heyarny/devcontainer-features/just-sshd:1.0.0
 ```
 
 Login to GHCR, then publish with the Dev Container CLI:
@@ -230,6 +287,8 @@ devcontainer features test --features codex-node --base-image mcr.microsoft.com/
 devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:bookworm devcontainer-features
 devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:trixie devcontainer-features
 devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:alpine devcontainer-features
+
+devcontainer features test --features just-sshd --base-image mcr.microsoft.com/devcontainers/base:noble devcontainer-features
 ```
 
 ## Resources

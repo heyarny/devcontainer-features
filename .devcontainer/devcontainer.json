@@ -36,7 +36,9 @@
         "ghcr.io/devcontainers/features/docker-outside-of-docker:latest": {
             "moby": "false"
         },
+        "ghcr.io/heyarny/devcontainer-features/just-sshd:1": {},
         "ghcr.io/heyarny/devcontainer-features/codex:3": {
+            "version": "0.147.0",
             "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions",
             "configSyncSource": "/home/vscode/.codex_config.toml"
         }

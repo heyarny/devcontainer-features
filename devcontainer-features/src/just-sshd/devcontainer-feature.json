@@ -1,0 +1,17 @@
+{
+  "id": "just-sshd",
+  "version": "1.0.0",
+  "name": "Just SSHD (Local, Unauthenticated)",
+  "description": "Configures SSH for a non-root Dev Container user without requiring a client password or key. Intended for local-only connections.",
+  "documentationURL": "https://github.com/heyarny/devcontainer-features/tree/main/devcontainer-features/src/just-sshd",
+  "dependsOn": {
+    "ghcr.io/devcontainers/features/sshd:1": {}
+  },
+  "options": {
+    "username": {
+      "type": "string",
+      "default": "automatic",
+      "description": "Existing non-root user allowed to connect. By default, use the Dev Container remote user."
+    }
+  }
+}
