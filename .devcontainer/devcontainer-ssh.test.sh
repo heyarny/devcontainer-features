@@ -4,7 +4,7 @@ set -euo pipefail
 
 if [[ "${DEVCONTAINER_SSH_TEST_DOCKER_STUB:-}" == 1 ]]; then
     printf '%s\n' "$*" >>"${DEVCONTAINER_SSH_TEST_DOCKER_LOG:?}"
-    if [[ "${1:-}" == ps ]]; then
+    if [[ "${1:-}" == ps && "${DEVCONTAINER_SSH_TEST_CONTAINER_RUNNING:-1}" == 1 ]]; then
         printf '%s\n' test-container-id
     fi
     exit 0
@@ -112,6 +112,35 @@ if [[ "${ssh_output}" == *percent_expand* ]]; then
 fi
 test "${ssh_status}" -ne 0
 grep -Fq "label=devcontainer.local_folder=${CANONICAL_WORKSPACE}" "${DOCKER_LOG}"
+
+# A running container needs Docker only; devcontainer is required solely for startup.
+restricted_path="${TEST_BIN}:/usr/bin:/bin:/usr/sbin:/sbin"
+if PATH="${restricted_path}" command -v devcontainer >/dev/null 2>&1; then
+    echo "Restricted test PATH unexpectedly contains devcontainer." >&2
+    exit 1
+fi
+: >"${DOCKER_LOG}"
+PATH="${restricted_path}" HOME="${TEST_HOME}" "${HELPER}" proxy \
+    --workspace-folder "${TEST_WORKSPACE}" \
+    --hostname "${TEST_HOSTNAME}" \
+    --remote-user vscode
+grep -Fqx "ps --quiet --filter label=devcontainer.local_folder=${CANONICAL_WORKSPACE}" "${DOCKER_LOG}"
+grep -Fqx 'exec --user root test-container-id test -x /usr/sbin/sshd' "${DOCKER_LOG}"
+grep -Fqx 'exec -i --user root test-container-id /usr/sbin/sshd -i' "${DOCKER_LOG}"
+
+set +e
+stopped_output="$(DEVCONTAINER_SSH_TEST_CONTAINER_RUNNING=0 \
+    PATH="${restricted_path}" HOME="${TEST_HOME}" "${HELPER}" proxy \
+    --workspace-folder "${TEST_WORKSPACE}" \
+    --hostname "${TEST_HOSTNAME}" \
+    --remote-user vscode 2>&1)"
+stopped_status=$?
+set -e
+test "${stopped_status}" -ne 0
+if [[ "${stopped_output}" != *'Required command not found: devcontainer'* ]]; then
+    echo "Stopped-container path did not report the missing devcontainer CLI." >&2
+    exit 1
+fi
 
 cp "${HOST_CONFIG}" "${ORIGINAL_HOST_CONFIG}"
 

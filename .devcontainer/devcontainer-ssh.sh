@@ -190,6 +190,7 @@ start_container() {
     local workspace="$1"
     local log_file
 
+    require_command devcontainer
     log_file="$(mktemp -t devcontainer-ssh-up.XXXXXX)"
     if ! devcontainer up \
         --workspace-folder "${workspace}" \
@@ -259,7 +260,6 @@ proxy_connection() {
     local container_id
     local select_status
 
-    require_command devcontainer
     require_command docker
     require_value "${declared_hostname}" hostname
     require_value "${remote_user}" remote-user
