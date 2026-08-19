@@ -1,6 +1,6 @@
 {
   "id": "codex-node",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "name": "OpenAI Codex with Node.js",
   "description": "Installs Node.js, npm, the OpenAI Codex CLI, and optionally links Codex state folders into the workspace.",
   "documentationURL": "https://containers.dev/implementors/features/",
@@ -29,7 +29,7 @@
     "configSyncSource": {
       "type": "string",
       "default": "",
-      "description": "Optional absolute container path to a mounted config.toml file to sync bidirectionally with $CODEX_HOME/config.toml. Omit this option to disable config syncing."
+      "description": "Optional absolute container path to a mounted config.toml file to sync bidirectionally with $CODEX_HOME/config.toml. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing."
     }
   }
 }
