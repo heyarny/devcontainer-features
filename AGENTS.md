@@ -7,8 +7,9 @@ Node.js-based `codex-node`.
 
 - Never edit, reformat, or add comments to
   `devcontainer-features/src/codex/install-codex-standalone.sh`. It is vendored
-  byte-for-byte from `https://chatgpt.com/codex/install.sh`. Keep feature-owned
-  behavior in `install.sh`, `update.sh`, and `version-policy.sh`.
+  byte-for-byte from
+  `https://github.com/openai/codex/releases/latest/download/install.sh`. Keep
+  feature-owned behavior in `install.sh`, `update.sh`, and `version-policy.sh`.
 - Keep `entrypoint.sh`, `link-folders.sh`, and `sync-config.sh` synchronized
   between `codex` and `codex-node`. Their only intentional difference is
   `INSTALL_DIR`. Apply shared behavior changes and tests to both features.

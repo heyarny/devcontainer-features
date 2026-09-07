@@ -24,11 +24,11 @@ image-wide paths so `codex` is available to all container users:
 | `configSyncSource` | empty | Optional absolute container path to a mounted `config.toml` file to sync bidirectionally with `$CODEX_HOME/config.toml`. Copy transactions use an advisory lock on the mounted source. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing. |
 
 The installer is vendored byte-for-byte from
-`https://chatgpt.com/codex/install.sh`; it is not fetched dynamically during the
-devcontainer build. It downloads verified release metadata and assets from
-`releases.openai.com` by default and falls back to verified GitHub Releases
-downloads when necessary. The feature rejects pinned releases older than
-`0.146.1` before running the installer.
+`https://github.com/openai/codex/releases/latest/download/install.sh`. It is not
+fetched dynamically during the devcontainer build. It downloads verified
+release metadata and assets from `releases.openai.com` by default and falls back
+to verified GitHub Releases downloads when necessary. The feature rejects
+pinned releases older than `0.146.1` before running the installer.
 
 The feature also installs the same standalone installer as a simple update
 command at `/usr/local/share/codex/update.sh`. To update or reinstall
