@@ -30,6 +30,7 @@ Options:
   --workspace-folder <path>  Local workspace (defaults to the repository root).
   --hostname <name>          Name to normalize into the generated SSH host.
   --remote-user <user>       Dev Container user used for SSH.
+  --forward-agent            Forward the host SSH agent (register only; default off).
 
 The hostname is normalized and receives the suffix ".devcontainer".
 The --hostname and --remote-user options are required by register and proxy.
@@ -206,6 +207,7 @@ register_host() {
     local workspace="$1"
     local declared_hostname="$2"
     local remote_user="$3"
+    local forward_agent="$4"
     local ssh_host
     local host_config
     local candidate_config
@@ -231,6 +233,7 @@ Host ${ssh_host}
     PubkeyAuthentication no
     PasswordAuthentication no
     KbdInteractiveAuthentication no
+    ForwardAgent ${forward_agent}
     ProxyCommand ${proxy_command}
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
@@ -352,6 +355,7 @@ shift
 workspace="${DEFAULT_WORKSPACE}"
 declared_hostname=""
 remote_user=""
+forward_agent="no"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -376,6 +380,10 @@ while [[ $# -gt 0 ]]; do
             remote_user="$2"
             shift 2
             ;;
+        --forward-agent)
+            forward_agent="yes"
+            shift
+            ;;
         -h|--help)
             usage
             exit 0
@@ -388,9 +396,14 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ "${forward_agent}" == yes && "${command}" != register ]]; then
+    echo "--forward-agent is only valid with register." >&2
+    exit 2
+fi
+
 case "${command}" in
     register)
-        register_host "${workspace}" "${declared_hostname}" "${remote_user}"
+        register_host "${workspace}" "${declared_hostname}" "${remote_user}" "${forward_agent}"
         ;;
     proxy)
         proxy_connection "${workspace}" "${declared_hostname}" "${remote_user}"

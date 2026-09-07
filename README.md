@@ -36,7 +36,7 @@ Install standalone Codex and link workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:3.0.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex:3.0.1": {
       "version": "latest",
       "linkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
@@ -49,7 +49,7 @@ Install npm-based Codex with Node.js and workspace-backed state folders:
 ```jsonc
 {
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex-node:2.3.1": {
+    "ghcr.io/heyarny/devcontainer-features/codex-node:2.3.2": {
       "codexVersion": "latest",
       "codexLinkFolders": "sessions=${containerWorkspaceFolder}/.codex/sessions,archived_sessions=${containerWorkspaceFolder}/.codex/archived_sessions"
     }
@@ -106,7 +106,7 @@ or make its content match to avoid an initial conflict.
 | `installDir` | `/usr/local/bin` | Directory where the global `codex` command symlink is installed. |
 | `standaloneHome` | `/usr/local/share/codex` | Directory where standalone Codex release payloads are stored. |
 | `linkFolders` | empty | Optional folder mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
-| `configSyncSource` | empty | Optional absolute container path to a mounted `config.toml` file to sync bidirectionally with `$CODEX_HOME/config.toml`. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing. |
+| `configSyncSource` | empty | Optional absolute container path to a mounted `config.toml` file to sync bidirectionally with `$CODEX_HOME/config.toml`. Copy transactions use an advisory lock on the mounted source. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing. |
 
 The standalone `codex` feature vendors the official installer served from
 `https://chatgpt.com/codex/install.sh`. The installer resolves and verifies
@@ -135,7 +135,7 @@ set explicitly.
 | `nodeVersion` | `24` | Node.js version or nvm alias to install. |
 | `npmVersion` | `11.15.0` | npm version or dist-tag to install. Use `bundled` or `none` to keep the npm version included with Node.js. |
 | `codexLinkFolders` | empty | Optional folder mappings. Target paths must resolve to absolute container paths. Omit this option when no folder links are needed. |
-| `configSyncSource` | empty | Optional absolute container path to a mounted `config.toml` file to sync bidirectionally with `$CODEX_HOME/config.toml`. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing. |
+| `configSyncSource` | empty | Optional absolute container path to a mounted `config.toml` file to sync bidirectionally with `$CODEX_HOME/config.toml`. Copy transactions use an advisory lock on the mounted source. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing. |
 
 On apt-based images, `nodeVersion` is installed with nvm and can be a semver
 version or nvm alias. On Alpine images, Node.js and npm are installed with
@@ -174,6 +174,19 @@ in the repository root:
 .devcontainer/register-ssh-proxy.sh
 ```
 
+SSH agent forwarding is disabled explicitly by default. To make identities
+loaded in the host SSH agent available to Git and SSH commands inside the
+container, register the alias with:
+
+```bash
+.devcontainer/register-ssh-proxy.sh --forward-agent
+```
+
+This forwards signing requests rather than copying private keys. Processes in
+the container can use the forwarded agent while the SSH connection is open, so
+enable it only for trusted workspaces. Running the registration command again
+without `--forward-agent` disables forwarding for the alias.
+
 This registers the following host in the developer's own `~/.ssh/config`:
 
 ```bash
@@ -208,7 +221,9 @@ state there.
 Instead, bind the host config file at a separate path and keep
 `/home/vscode/.codex/config.toml` as a normal container-local file. Config sync
 rejects a symlink at the live config path instead of replacing the link during
-an atomic update. Let the feature sync the two files in both directions:
+an atomic update. Copy transactions lock the mounted source file, so containers
+sharing that host file serialize updates; unchanged polling does not take the
+lock. Let the feature sync the two files in both directions:
 
 ```jsonc
 {
@@ -219,7 +234,7 @@ an atomic update. Let the feature sync the two files in both directions:
     "source=${localEnv:HOME}/.codex/plugins,target=/home/vscode/.codex/plugins,type=bind"
   ],
   "features": {
-    "ghcr.io/heyarny/devcontainer-features/codex:3.0.0": {
+    "ghcr.io/heyarny/devcontainer-features/codex:3.0.1": {
       "configSyncSource": "/home/vscode/.codex_config.toml"
     }
   }
@@ -253,8 +268,8 @@ remaining nonempty version.
 The default publish target is GHCR:
 
 ```text
-ghcr.io/heyarny/devcontainer-features/codex:3.0.0
-ghcr.io/heyarny/devcontainer-features/codex-node:2.3.1
+ghcr.io/heyarny/devcontainer-features/codex:3.0.1
+ghcr.io/heyarny/devcontainer-features/codex-node:2.3.2
 ghcr.io/heyarny/devcontainer-features/just-sshd:1.0.0
 ```
 

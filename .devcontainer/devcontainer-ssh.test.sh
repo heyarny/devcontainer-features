@@ -17,6 +17,7 @@ fi
 
 readonly SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly HELPER="${SCRIPT_DIR}/devcontainer-ssh.sh"
+readonly REGISTER_HELPER="${SCRIPT_DIR}/register-ssh-proxy.sh"
 readonly TEST_ROOT="$(mktemp -d -t devcontainer-ssh-test.XXXXXX)"
 readonly TEST_HOME="${TEST_ROOT}/home"
 readonly TEST_WORKSPACE="${TEST_ROOT}/workspace's 100%ready"
@@ -92,6 +93,7 @@ test "$6" = --hostname
 test "$7" = "${TEST_HOSTNAME}"
 test "$8" = --remote-user
 test "$9" = vscode
+grep -Fqx '    ForwardAgent no' "${HOST_CONFIG}"
 
 # Let the generated ProxyCommand reach the helper without requiring a real
 # container. The test script doubles as docker when invoked through this link.
@@ -142,6 +144,18 @@ if [[ "${stopped_output}" != *'Required command not found: devcontainer'* ]]; th
     exit 1
 fi
 
+HOME="${TEST_HOME}" "${HELPER}" register \
+    --workspace-folder "${TEST_WORKSPACE}" \
+    --hostname "${TEST_HOSTNAME}" \
+    --remote-user vscode \
+    --forward-agent
+
+grep -Fqx '    ForwardAgent yes' "${HOST_CONFIG}"
+
+HOME="${TEST_HOME}" "${REGISTER_HELPER}" --forward-agent
+grep -Fqx '    ForwardAgent yes' \
+    "${TEST_HOME}/.ssh/devcontainers/devcontainer-features.devcontainer.conf"
+
 cp "${HOST_CONFIG}" "${ORIGINAL_HOST_CONFIG}"
 
 set +e
@@ -176,6 +190,7 @@ HOME="${TEST_HOME}" "${HELPER}" register \
     --remote-user node
 
 grep -Fqx '    User node' "${HOST_CONFIG}"
+grep -Fqx '    ForwardAgent no' "${HOST_CONFIG}"
 if cmp -s "${HOST_CONFIG}" "${ORIGINAL_HOST_CONFIG}"; then
     echo "Successful registration did not replace the prior host configuration." >&2
     exit 1

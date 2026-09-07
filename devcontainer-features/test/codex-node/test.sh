@@ -6,8 +6,8 @@ set -euo pipefail
 node --version
 npm --version
 codex --version
-test -x /usr/local/bin/node
-test -x /usr/local/bin/npm
+command -v node >/dev/null
+command -v npm >/dev/null
 test -f /usr/local/share/codex-node/runtime.env
 test -x /usr/local/share/codex-node/entrypoint.sh
 ! grep -Eq 'sync-config\.sh.*--once' /usr/local/share/codex-node/entrypoint.sh
@@ -426,6 +426,102 @@ HOME="${tmp_dir}/source-symlink-home" \
 test -L "${source_symlink}"
 assert_content "${source_symlink_target}" 'model = "live-through-source-link"'
 assert_no_pid_file "${source_symlink_home}"
+
+# Concurrent sync processes serialize writes through the source inode. The
+# second writer must recheck the source after the first writer commits.
+lock_source="${tmp_dir}/locked-source.toml"
+lock_home_a="${tmp_dir}/locked-home-a/.codex"
+lock_home_b="${tmp_dir}/locked-home-b/.codex"
+lock_held="${tmp_dir}/source-lock-held"
+lock_log_a="${tmp_dir}/locked-writer-a.log"
+lock_log_b="${tmp_dir}/locked-writer-b.log"
+mkdir -p "${lock_home_a}" "${lock_home_b}"
+: > "${lock_source}"
+printf 'model = "locked-writer-a"\n' > "${lock_home_a}/config.toml"
+printf 'model = "locked-writer-b"\n' > "${lock_home_b}/config.toml"
+
+flock -x "${lock_source}" sh -c ': > "$1"; sleep 3' sh "${lock_held}" &
+lock_holder_pid=$!
+
+attempts=0
+while [ ! -e "${lock_held}" ] && [ "${attempts}" -lt 15 ]; do
+    attempts=$((attempts + 1))
+    sleep 1
+done
+test -e "${lock_held}" || fail 'Source lock holder did not start.'
+
+CODEX_CONFIG_SYNC_SOURCE="${lock_source}" \
+CODEX_HOME="${lock_home_a}" \
+HOME="${tmp_dir}/locked-home-a" \
+    "${entrypoint_sync_script}" --once > "${lock_log_a}" 2>&1 &
+lock_writer_a_pid=$!
+
+CODEX_CONFIG_SYNC_SOURCE="${lock_source}" \
+CODEX_HOME="${lock_home_b}" \
+HOME="${tmp_dir}/locked-home-b" \
+    "${entrypoint_sync_script}" --once > "${lock_log_b}" 2>&1 &
+lock_writer_b_pid=$!
+
+sleep 1
+kill -0 "${lock_writer_a_pid}" 2>/dev/null || fail 'First config writer bypassed the source lock.'
+kill -0 "${lock_writer_b_pid}" 2>/dev/null || fail 'Second config writer bypassed the source lock.'
+test ! -s "${lock_source}" || fail 'A config writer modified the source while it was locked.'
+
+wait "${lock_holder_pid}"
+if wait "${lock_writer_a_pid}"; then
+    lock_writer_a_status=0
+else
+    lock_writer_a_status=$?
+fi
+if wait "${lock_writer_b_pid}"; then
+    lock_writer_b_status=0
+else
+    lock_writer_b_status=$?
+fi
+
+if [ "${lock_writer_a_status}" -eq 0 ]; then
+    [ "${lock_writer_b_status}" -ne 0 ] || fail 'Both competing config writers committed.'
+else
+    [ "${lock_writer_b_status}" -eq 0 ] || fail 'Neither competing config writer committed.'
+fi
+
+lock_source_content="$(cat "${lock_source}")"
+case "${lock_source_content}" in
+    'model = "locked-writer-a"'|'model = "locked-writer-b"') ;;
+    *) fail "Concurrent config writers produced invalid content: ${lock_source_content}" ;;
+esac
+
+# Source-to-live snapshots take a shared lock and therefore wait for an active
+# writer instead of reading an in-place update.
+lock_reader_source="${tmp_dir}/locked-reader-source.toml"
+lock_reader_home="${tmp_dir}/locked-reader-home/.codex"
+lock_reader_held="${tmp_dir}/source-reader-lock-held"
+lock_reader_log="${tmp_dir}/locked-reader.log"
+printf 'model = "locked-reader"\n' > "${lock_reader_source}"
+
+flock -x "${lock_reader_source}" sh -c ': > "$1"; sleep 3' sh "${lock_reader_held}" &
+lock_reader_holder_pid=$!
+
+attempts=0
+while [ ! -e "${lock_reader_held}" ] && [ "${attempts}" -lt 15 ]; do
+    attempts=$((attempts + 1))
+    sleep 1
+done
+test -e "${lock_reader_held}" || fail 'Source reader lock holder did not start.'
+
+CODEX_CONFIG_SYNC_SOURCE="${lock_reader_source}" \
+CODEX_HOME="${lock_reader_home}" \
+HOME="${tmp_dir}/locked-reader-home" \
+    "${entrypoint_sync_script}" --once > "${lock_reader_log}" 2>&1 &
+lock_reader_pid=$!
+
+sleep 1
+kill -0 "${lock_reader_pid}" 2>/dev/null || fail 'Config reader bypassed the source lock.'
+test ! -e "${lock_reader_home}/config.toml" || fail 'Config reader copied the source while it was locked.'
+
+wait "${lock_reader_holder_pid}"
+wait "${lock_reader_pid}"
+assert_content "${lock_reader_home}/config.toml" 'model = "locked-reader"'
 
 # One-shot sync leaves a missing source alone: it preserves local content and
 # does not create the mapped source file.

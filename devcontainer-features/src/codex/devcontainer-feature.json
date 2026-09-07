@@ -1,6 +1,6 @@
 {
   "id": "codex",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "name": "OpenAI Codex CLI",
   "description": "Installs the standalone OpenAI Codex CLI globally without requiring Node.js or npm, and optionally links Codex state folders into the workspace.",
   "documentationURL": "https://github.com/openai/codex",
@@ -29,7 +29,7 @@
     "configSyncSource": {
       "type": "string",
       "default": "",
-      "description": "Optional absolute container path to a mounted config.toml file to sync bidirectionally with $CODEX_HOME/config.toml. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing."
+      "description": "Optional absolute container path to a mounted config.toml file to sync bidirectionally with $CODEX_HOME/config.toml. Copy transactions use an advisory lock on the mounted source. Startup waits up to 15 seconds for the initial sync check, then continues while synchronization waits or retries as needed. Omit this option to disable config syncing."
     }
   }
 }

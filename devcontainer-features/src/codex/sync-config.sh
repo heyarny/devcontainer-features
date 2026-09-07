@@ -46,6 +46,11 @@ if [[ "${config_sync_source}" != /* ]]; then
     exit 1
 fi
 
+if ! command -v flock >/dev/null 2>&1; then
+    echo "Codex config sync requires flock." >&2
+    exit 1
+fi
+
 codex_home="${CODEX_HOME:-${HOME}/.codex}"
 local_config="${codex_home}/config.toml"
 # Snapshots and newly created configs may contain credentials.
@@ -114,6 +119,28 @@ is_content_state() {
     esac
 }
 
+# Lock the bind-mounted source inode itself so every container using the same
+# host file participates in the same advisory lock without a shared sidecar.
+acquire_source_lock() {
+    local lock_mode="$1"
+
+    if ! exec 9<"${config_sync_source}"; then
+        log_sync "failed to open source '${config_sync_source}' for locking."
+        return 1
+    fi
+
+    if ! flock "${lock_mode}" 9; then
+        exec 9<&-
+        log_sync "failed to lock source '${config_sync_source}'."
+        return 1
+    fi
+}
+
+release_source_lock() {
+    # Closing the descriptor releases its flock even when a copy helper failed.
+    exec 9<&-
+}
+
 compare_files() {
     local left="$1"
     local right="$2"
@@ -142,7 +169,7 @@ compare_files() {
 # watcher advances to the committed baseline and handles that edit next.
 # Source-to-live updates stage beside the destination so the final rename is
 # atomic on the live config's filesystem.
-copy_source_to_local() {
+copy_source_to_local_locked() {
     local expected_source_state="$1"
     local expected_local_state="$2"
     local temporary_config snapshot_state current_source_state current_local_state comparison
@@ -218,7 +245,24 @@ copy_source_to_local() {
     return 0
 }
 
-copy_local_to_source() {
+copy_source_to_local() {
+    local copy_status
+
+    if ! acquire_source_lock -s; then
+        return 1
+    fi
+
+    if copy_source_to_local_locked "$@"; then
+        copy_status=0
+    else
+        copy_status="$?"
+    fi
+    release_source_lock
+
+    return "${copy_status}"
+}
+
+copy_local_to_source_locked() {
     local expected_local_state="$1"
     local expected_source_state="$2"
     local temporary_config snapshot_state current_local_state current_source_state comparison
@@ -306,6 +350,23 @@ copy_local_to_source() {
     return 0
 }
 
+copy_local_to_source() {
+    local copy_status
+
+    if ! acquire_source_lock -x; then
+        return 1
+    fi
+
+    if copy_local_to_source_locked "$@"; then
+        copy_status=0
+    else
+        copy_status="$?"
+    fi
+    release_source_lock
+
+    return "${copy_status}"
+}
+
 log_conflict() {
     # With no trustworthy direction signal, preserving both files is safer than
     # guessing a winner from timestamps.
@@ -383,7 +444,7 @@ watch_config() {
     fi
 
     while :; do
-        sleep 2
+        sleep 5
 
         # Observation failures are retryable. Keeping this process alive also
         # keeps the last known states needed to infer the next edit direction.
