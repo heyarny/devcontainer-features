@@ -1,0 +1,28 @@
+{
+  "user_namespace": {
+    "image": "mcr.microsoft.com/devcontainers/base:noble",
+    "remoteUser": "vscode",
+    "runArgs": ["--security-opt=seccomp=unconfined"],
+    "features": {
+      "agent-sandbox": {}
+    }
+  },
+  "codex_sandbox": {
+    "image": "mcr.microsoft.com/devcontainers/base:noble",
+    "remoteUser": "vscode",
+    "runArgs": ["--security-opt=seccomp=unconfined"],
+    "features": {
+      "agent-sandbox": {},
+      "codex": { "version": "0.158.0" }
+    }
+  },
+  "alpine_sandbox": {
+    "image": "mcr.microsoft.com/devcontainers/base:alpine",
+    "remoteUser": "vscode",
+    "runArgs": ["--security-opt=seccomp=unconfined"],
+    "features": {
+      "agent-sandbox": {},
+      "codex": { "version": "0.158.0" }
+    }
+  }
+}

@@ -1,8 +1,8 @@
 # Codex Dev Container Features
 
 This repository contains example devcontainer setup for running Codex in a
-container, Dev Container Features for installing Codex, and an experimental
-Feature for simple local SSH access.
+container, Dev Container Features for installing Codex and optional Linux
+sandbox support, and an experimental Feature for simple local SSH access.
 
 The `codex` feature installs the standalone OpenAI Codex CLI globally without
 Node.js or npm. The `codex-node` feature installs Node.js, npm, and the npm-based
@@ -18,6 +18,8 @@ inside the container home.
   and provides `/usr/local/share/codex/update.sh` for manual updates
   inside an existing container.
 - `codex-node`: installs Node.js 24, npm 11.15.0, and `@openai/codex`.
+- `agent-sandbox`: installs `bubblewrap` on apt- and apk-based images
+  for Linux agent sandboxes.
 - `just-sshd`: configures SSH for one non-root user without requiring a client
   password or key.
 - Both Codex Features support apt-based and Alpine-based Microsoft Dev
@@ -56,6 +58,29 @@ Install npm-based Codex with Node.js and workspace-backed state folders:
   }
 }
 ```
+
+After publishing `agent-sandbox`, install `bubblewrap` alongside
+either Codex Feature:
+
+```jsonc
+{
+  "image": "mcr.microsoft.com/devcontainers/base:noble",
+  // Use this when Docker blocks bwrap from creating user namespaces.
+  "runArgs": ["--security-opt=seccomp=unconfined"],
+  "features": {
+    "ghcr.io/heyarny/devcontainer-features/codex:3.0.1": {},
+    "ghcr.io/heyarny/devcontainer-features/agent-sandbox:1": {}
+  }
+}
+```
+
+The `agent-sandbox` Feature installs `bubblewrap`, but container runtime permissions
+come from `devcontainer.json` and the host. Use the `runArgs` setting when
+Docker's default seccomp profile blocks user namespaces. It disables Docker's
+seccomp filter for the entire container; the host's user namespace and AppArmor
+policies can still prevent `bwrap` from starting. See the
+[Feature details](devcontainer-features/src/agent-sandbox/README.md) and
+[OpenAI's sandbox documentation](https://learn.chatgpt.com/docs/sandboxing#prerequisites).
 
 Run SSH for the Dev Container user without a client password or key:
 
@@ -271,6 +296,7 @@ The default publish target is GHCR:
 ```text
 ghcr.io/heyarny/devcontainer-features/codex:3.0.1
 ghcr.io/heyarny/devcontainer-features/codex-node:2.3.2
+ghcr.io/heyarny/devcontainer-features/agent-sandbox:1.0.0
 ghcr.io/heyarny/devcontainer-features/just-sshd:1.0.0
 ```
 
@@ -303,6 +329,11 @@ devcontainer features test --features codex-node --base-image mcr.microsoft.com/
 devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:bookworm devcontainer-features
 devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:trixie devcontainer-features
 devcontainer features test --features codex-node --base-image mcr.microsoft.com/devcontainers/base:alpine devcontainer-features
+
+devcontainer features test --features agent-sandbox --base-image mcr.microsoft.com/devcontainers/base:noble devcontainer-features
+devcontainer features test --features agent-sandbox --base-image mcr.microsoft.com/devcontainers/base:bookworm devcontainer-features
+devcontainer features test --features agent-sandbox --base-image mcr.microsoft.com/devcontainers/base:alpine devcontainer-features
+devcontainer features test --features agent-sandbox --skip-scenarios --base-image debian:bookworm-slim devcontainer-features
 
 devcontainer features test --features just-sshd --base-image mcr.microsoft.com/devcontainers/base:noble devcontainer-features
 ```

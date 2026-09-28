@@ -1,0 +1,7 @@
+{
+  "id": "agent-sandbox",
+  "version": "1.0.0",
+  "name": "Agent Sandbox (Bubblewrap)",
+  "description": "Installs bubblewrap for Linux agent sandboxes in Debian/Ubuntu and Alpine Dev Containers.",
+  "documentationURL": "https://github.com/heyarny/devcontainer-features/tree/main/devcontainer-features/src/agent-sandbox"
+}
