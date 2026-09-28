@@ -1,6 +1,6 @@
 # Codex Dev Container Features
 
-This repository contains example devcontainer setup for running Codex in a
+This repository contains an example devcontainer setup for running Codex in a
 container, Dev Container Features for installing Codex and optional Linux
 sandbox support, and an experimental Feature for simple local SSH access.
 
@@ -12,7 +12,7 @@ mount is available. This is useful for keeping Codex state, such as `sessions`
 and `archived_sessions`, inside the project host workspace instead of only
 inside the container home.
 
-## Feature
+## Features
 
 - `codex`: installs the standalone Codex CLI globally at `/usr/local/bin/codex`
   and provides `/usr/local/share/codex/update.sh` for manual updates
@@ -26,7 +26,7 @@ inside the container home.
   Container base images.
 - `codex` supports `version`, `installDir`, `standaloneHome`, `linkFolders`, and
   `configSyncSource`.
-- `codex-node` supports `codexVersion`, `nodeVersion`, `npmVersion`, and
+- `codex-node` supports `codexVersion`, `nodeVersion`, `npmVersion`,
   `codexLinkFolders`, and `configSyncSource`.
 - Runs folder linking at startup and supervises one foreground config sync
   watcher when `configSyncSource` is configured.
@@ -59,14 +59,13 @@ Install npm-based Codex with Node.js and workspace-backed state folders:
 }
 ```
 
-After publishing `agent-sandbox`, install `bubblewrap` alongside
-either Codex Feature:
+Add `agent-sandbox` alongside either Codex Feature to install `bubblewrap`:
 
 ```jsonc
 {
   "image": "mcr.microsoft.com/devcontainers/base:noble",
-  // Use this when Docker blocks bwrap from creating user namespaces.
-  "runArgs": ["--security-opt=seccomp=unconfined"],
+  // Uncomment only if Docker blocks bwrap from creating user namespaces.
+  // "runArgs": ["--security-opt=seccomp=unconfined"],
   "features": {
     "ghcr.io/heyarny/devcontainer-features/codex:3.0.1": {},
     "ghcr.io/heyarny/devcontainer-features/agent-sandbox:1": {}
@@ -74,10 +73,10 @@ either Codex Feature:
 }
 ```
 
-The `agent-sandbox` Feature installs `bubblewrap`, but container runtime permissions
-come from `devcontainer.json` and the host. Use the `runArgs` setting when
-Docker's default seccomp profile blocks user namespaces. It disables Docker's
-seccomp filter for the entire container; the host's user namespace and AppArmor
+The `agent-sandbox` Feature installs `bubblewrap`; container runtime permissions
+come from `devcontainer.json` and the host. If Docker's default seccomp profile
+blocks user namespaces, enable the commented `runArgs` line. It disables Docker's
+seccomp filter for the entire container; host user namespace and AppArmor
 policies can still prevent `bwrap` from starting. See the
 [Feature details](devcontainer-features/src/agent-sandbox/README.md) and
 [OpenAI's sandbox documentation](https://learn.chatgpt.com/docs/sandboxing#prerequisites).
@@ -104,9 +103,8 @@ The folder-link options in the Codex examples create links like:
 /home/vscode/.codex/archived_sessions -> /workspace/.codex/archived_sessions
 ```
 
-Folder-link options are intentionally documented as strings. Arrays of strings
-are not portable across tools; DevPod serializes them differently than the Dev
-Containers CLI. Use the comma-separated string form for predictable behavior.
+Use comma-separated strings for folder-link options. Some Dev Container clients
+serialize arrays differently.
 
 When the container starts, each feature runs folder linking as the remote user.
 When `configSyncSource` is configured, the entrypoint starts one foreground
@@ -170,20 +168,6 @@ the Alpine package repository.
 
 Each folder-link entry uses `name=target`. The `name` is created under
 `$CODEX_HOME`; `target` must resolve to an absolute container path.
-
-## Local DevPod Check
-
-From the repository root:
-
-```bash
-devpod delete devcontainer-features
-devpod up . --ide none
-ssh devcontainer-features.devpod 'node --version; npm --version; codex --version; readlink /home/vscode/.codex/sessions'
-```
-
-The repository devcontainer uses the local feature reference for development and
-an explicit `workspaceMount` to keep `/workspace` consistent across DevPod and
-VS Code.
 
 ## Optional SSH Host Alias on macOS
 
@@ -343,4 +327,3 @@ devcontainer features test --features just-sshd --base-image mcr.microsoft.com/d
 - [Dev Containers](https://containers.dev/)
 - [Dev Container Features](https://containers.dev/features)
 - [Dev Containers base images](https://hub.docker.com/r/microsoft/devcontainers)
-- [DevPod](https://devpod.sh/)

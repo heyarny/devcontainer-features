@@ -7,13 +7,11 @@ used alongside either Codex Feature; it does not install or configure Codex.
 
 ## Example
 
-The registry reference becomes available after this Feature is published.
-
 ```jsonc
 {
   "image": "mcr.microsoft.com/devcontainers/base:noble",
-  // Use this when Docker blocks bwrap from creating user namespaces.
-  "runArgs": ["--security-opt=seccomp=unconfined"],
+  // Uncomment only if Docker blocks bwrap from creating user namespaces.
+  // "runArgs": ["--security-opt=seccomp=unconfined"],
   "features": {
     "ghcr.io/heyarny/devcontainer-features/codex:3.0.1": {},
     "ghcr.io/heyarny/devcontainer-features/agent-sandbox:1": {}
@@ -21,10 +19,11 @@ The registry reference becomes available after this Feature is published.
 }
 ```
 
-Try the container without `runArgs` first. Set it in the consuming
-`devcontainer.json` if Docker blocks `bwrap` from creating a user namespace; a
-Feature cannot set container runtime options during image build. Docker
-recommends keeping its [default seccomp profile](https://docs.docker.com/engine/security/seccomp/).
+Try the container without `runArgs` first. Enable the commented line in the
+consuming `devcontainer.json` if Docker blocks `bwrap` from creating a user
+namespace. A Feature cannot set container runtime options during image build.
+Docker recommends keeping its
+[default seccomp profile](https://docs.docker.com/engine/security/seccomp/).
 A tested custom profile can preserve more of Docker's filtering;
 `seccomp=unconfined` disables that filter for the whole container. The host must
 also allow user namespaces, and an Ubuntu AppArmor policy can still block them.
